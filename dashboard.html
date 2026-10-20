@@ -37,43 +37,48 @@ body.shared .upload-overlay{display:none!important}
 .kpi-lbl{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
 .kpi-val{font-weight:700;line-height:1.1;margin:2px 0}
 .kpi-sub{font-size:8px;color:var(--gray)}
-.scroll-area{flex:1;overflow-y:auto;padding:10px 16px 14px;display:flex;flex-direction:column;gap:10px}
+.scroll-area{flex:1;overflow-y:auto;padding:10px 16px 14px}
+
+/* LAYOUT B — tabela esquerda + cards direita */
+.main-grid{display:grid;grid-template-columns:60% 40%;gap:10px;height:100%}
+@media(max-width:900px){.main-grid{grid-template-columns:1fr}}
+
 .card{background:#fff;border-radius:10px;border:1px solid var(--border);box-shadow:0 1px 6px rgba(0,0,0,.05);overflow:hidden}
 .card-hdr{padding:7px 12px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:space-between;color:#fff;gap:6px}
 .badge{padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;background:rgba(255,255,255,.22);white-space:nowrap}
-.tbl-wrap{overflow-x:auto}
+
+/* TABELA */
+.tbl-wrap{overflow-y:auto;max-height:calc(100vh - 200px)}
 .tbl{width:100%;border-collapse:collapse;font-size:10px}
-.tbl thead th{background:var(--dark);color:#fff;padding:7px 12px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+.tbl thead th{position:sticky;top:0;background:var(--dark);color:#fff;padding:7px 10px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;z-index:1}
 .tbl tbody tr{border-bottom:1px solid #f0f0f0;transition:background .12s}
 .tbl tbody tr:hover td{background:#f5f7ff}
-.tbl td{padding:7px 12px;vertical-align:middle;font-size:10px}
-.delta-ok{color:#2e7d32;font-weight:700}
-.delta-nok{color:#c62828;font-weight:700}
-.delta-eq{color:#1565c0;font-weight:700}
-.proj-pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700}
-.status-pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700}
-.s-ok{background:#e8f5e9;color:#2e7d32}
-.s-fut{background:#e3f2fd;color:#1565c0}
-.row3{display:grid;grid-template-columns:180px 1fr 1fr;gap:10px}
-@media(max-width:1024px){.row3{grid-template-columns:1fr 1fr}.row3>.card:first-child{grid-column:1/-1}.kpi-bar{grid-template-columns:1fr 1fr}.kpi-bar>.kpi-card:last-child{grid-column:1/-1}}
-@media(max-width:680px){.row3{grid-template-columns:1fr}.kpi-bar{grid-template-columns:1fr}.nav-title{display:none}.scroll-area{padding:8px 10px 10px}}
-.pecas-body{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 12px;text-align:center;min-height:150px}
-.pecas-val{font-size:32px;font-weight:700;color:var(--dark);line-height:1}
+.tbl td{padding:6px 10px;vertical-align:middle;font-size:10px}
+.proj-pill{display:inline-block;padding:2px 7px;border-radius:8px;font-size:9px;font-weight:700}
+.s-ok{background:#e8f5e9;color:#2e7d32;display:inline-block;padding:2px 7px;border-radius:8px;font-size:9px;font-weight:700}
+.s-fut{background:#e3f2fd;color:#1565c0;display:inline-block;padding:2px 7px;border-radius:8px;font-size:9px;font-weight:700}
+
+/* CARDS DIREITA */
+.cards-col{display:flex;flex-direction:column;gap:10px}
+.pecas-body{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px 12px;text-align:center}
+.pecas-val{font-size:28px;font-weight:700;color:var(--dark);line-height:1}
 .pecas-unit{font-size:9px;color:var(--gray);margin-top:3px}
-.pecas-proj{font-size:9px;font-weight:700;color:var(--orange);margin-top:7px;padding:3px 10px;background:#fff3e0;border-radius:10px}
-.occ-list{padding:8px 12px;max-height:215px;overflow-y:auto;display:flex;flex-direction:column;gap:5px}
-.occ-item{display:flex;align-items:center;gap:7px}
-.occ-name{font-size:9.5px;font-weight:600;min-width:96px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.occ-bar-wrap{flex:1;background:#f0f0f0;border-radius:4px;height:7px;overflow:hidden}
-.occ-bar{height:100%;background:var(--red);border-radius:4px;transition:width .4s}
-.occ-time{font-size:9px;color:var(--gray);white-space:nowrap;min-width:38px;text-align:right}
-.check-sub{font-size:8px;color:var(--gray);padding:5px 12px 0}
-.check-grid{padding:7px 10px;display:flex;flex-wrap:wrap;gap:5px;max-height:215px;overflow-y:auto}
-.chk-card{background:#fafafa;border:1px solid var(--border);border-radius:7px;padding:6px 9px;min-width:86px;display:flex;flex-direction:column;gap:2px}
-.chk-name{font-size:8.5px;font-weight:600;color:var(--dark);line-height:1.3}
-.chk-badge{font-size:7.5px;font-weight:700;padding:2px 7px;border-radius:5px;align-self:flex-start;margin-top:2px}
+.pecas-proj{font-size:9px;font-weight:700;color:var(--orange);margin-top:6px;padding:3px 10px;background:#fff3e0;border-radius:10px}
+.occ-list{padding:8px 12px;max-height:160px;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
+.occ-item{display:flex;align-items:center;gap:6px}
+.occ-name{font-size:9px;font-weight:600;min-width:80px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.occ-bar-wrap{flex:1;background:#f0f0f0;border-radius:4px;height:6px;overflow:hidden}
+.occ-bar{height:100%;background:var(--red);border-radius:4px}
+.occ-time{font-size:9px;color:var(--gray);white-space:nowrap;min-width:34px;text-align:right}
+.check-sub{font-size:8px;color:var(--gray);padding:4px 12px 0}
+.check-grid{padding:6px 10px;display:flex;flex-wrap:wrap;gap:4px;max-height:160px;overflow-y:auto}
+.chk-card{background:#fafafa;border:1px solid var(--border);border-radius:6px;padding:5px 8px;min-width:80px;display:flex;flex-direction:column;gap:2px}
+.chk-name{font-size:8px;font-weight:600;color:var(--dark);line-height:1.3}
+.chk-badge{font-size:7.5px;font-weight:700;padding:2px 6px;border-radius:4px;align-self:flex-start;margin-top:1px}
 .ck-ok{background:#e8f5e9;color:#2e7d32}.ck-nok{background:#ffebee;color:#c62828}.ck-na{background:#f5f5f5;color:#757575}.ck-oth{background:#fff8e1;color:#e65100}
-.empty{text-align:center;padding:22px;color:var(--gray);font-size:10px}
+.empty{text-align:center;padding:18px;color:var(--gray);font-size:10px}
+
+/* UPLOAD */
 .upload-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:900;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
 .upload-overlay.show{display:flex}
 .up-panel{background:#fff;border-radius:14px;width:420px;max-width:96vw;box-shadow:0 24px 64px rgba(0,0,0,.35);position:relative;max-height:92vh;overflow-y:auto}
@@ -199,38 +204,45 @@ body.shared .upload-overlay{display:none!important}
   </div>
 
   <div class="scroll-area">
-    <div class="card">
-      <div class="card-hdr" style="background:var(--dark)">
-        <span id="tblTitle">&#9201; Horas Planejadas &#215; Realizadas por TryOut</span>
-        <span class="badge" id="tblBadge">-- TryOuts</span>
-      </div>
-      <div class="tbl-wrap">
-        <table class="tbl">
-          <thead><tr>
-            <th>Data</th><th>Projeto</th><th>Planejado</th><th>Realizado</th><th>&#916; Horas</th><th>Status</th>
-          </tr></thead>
-          <tbody id="tblBody"><tr><td colspan="6" class="empty">Carregue as planilhas</td></tr></tbody>
-        </table>
-      </div>
-    </div>
-    <div class="row3">
+    <div class="main-grid">
+
+      <!-- TABELA ESQUERDA -->
       <div class="card">
-        <div class="card-hdr" style="background:var(--green)">&#128230; Pe&#231;as Produzidas</div>
-        <div class="pecas-body">
-          <div class="pecas-val" id="pVal">--</div>
-          <div class="pecas-unit">pe&#231;as produzidas</div>
-          <div class="pecas-proj" id="pProj">total geral</div>
+        <div class="card-hdr" style="background:var(--dark)">
+          <span id="tblTitle">&#9201; Horas Planejadas &#215; Realizadas por TryOut</span>
+          <span class="badge" id="tblBadge">-- TryOuts</span>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr>
+              <th>Data</th><th>Projeto</th><th>Planejado</th><th>Realizado</th><th>Status</th>
+            </tr></thead>
+            <tbody id="tblBody"><tr><td colspan="5" class="empty">Carregue as planilhas</td></tr></tbody>
+          </table>
         </div>
       </div>
-      <div class="card">
-        <div class="card-hdr" style="background:#c0392b">&#128308; Principais Ocorr&#234;ncias</div>
-        <div class="occ-list" id="occList"><div class="empty">Carregue as planilhas</div></div>
+
+      <!-- CARDS DIREITA -->
+      <div class="cards-col">
+        <div class="card">
+          <div class="card-hdr" style="background:var(--green)">&#128230; Pe&#231;as Produzidas</div>
+          <div class="pecas-body">
+            <div class="pecas-val" id="pVal">--</div>
+            <div class="pecas-unit">pe&#231;as produzidas</div>
+            <div class="pecas-proj" id="pProj">total geral</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hdr" style="background:#c0392b">&#128308; Principais Ocorr&#234;ncias</div>
+          <div class="occ-list" id="occList"><div class="empty">Carregue as planilhas</div></div>
+        </div>
+        <div class="card">
+          <div class="card-hdr" style="background:var(--purple)">&#9989; Checklist &#183; &#218;ltimo TryOut</div>
+          <div class="check-sub" id="chkSub"></div>
+          <div class="check-grid" id="chkGrid"><div class="empty">Carregue as planilhas</div></div>
+        </div>
       </div>
-      <div class="card">
-        <div class="card-hdr" style="background:var(--purple)">&#9989; Checklist &#183; &#218;ltimo TryOut</div>
-        <div class="check-sub" id="chkSub"></div>
-        <div class="check-grid" id="chkGrid"><div class="empty">Carregue as planilhas</div></div>
-      </div>
+
     </div>
   </div>
 </div>
@@ -271,7 +283,7 @@ const dball=()=>new Promise(r=>{const q=db.transaction('a','readonly').objectSto
 function dTipo(wb,nome){const nl=nk(nome);if((nl.startsWith('try-out')||nl.startsWith('tryout'))&&!nl.includes('cronograma'))return'h';if(nl.includes('cronograma')||nl.includes('cron'))return'c';if(wb.SheetNames.some(n=>nk(n).includes('dado')||nk(n).includes('cron')||nk(n).includes('plano')))return'c';try{const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:'',header:1});if(rows.length){const h=rows[0].map(c=>nk(String(c||'')));if(h.some(x=>x.includes('nome')&&x.includes('tarefa')))return'c';}}catch{}return'h';}
 function cronExportDate(wb){for(const sn of wb.SheetNames){const m=sn.match(/(\d{4}-\d{2}-\d{2})/);if(m)return m[1];}return TODAY;}
 function parseCron(wb){let sn=wb.SheetNames[0],maxL=0;for(const n of wb.SheetNames){try{const r=XLSX.utils.sheet_to_json(wb.Sheets[n],{defval:''});if(r.length>maxL){const temNome=r.length&&Object.keys(r[0]).some(k=>nk(k).includes('nome'));if(temNome){maxL=r.length;sn=n;}else if(r.length>maxL*2){maxL=r.length;sn=n;}}}catch{}}const rows=XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:''});const res=[];for(const row of rows){const rn={};for(const k of Object.keys(row))rn[nk(k)]=row[k];const nomeKey=findKey(row,'nome da tarefa','nome da atividade','nome','task name','titulo','atividade','tarefa','summary','name');const nome=String(nomeKey?row[nomeKey]:(col(rn,'nome da tarefa','nome da atividade','nome')||'')).trim();if(!nome.toUpperCase().includes('SMD'))continue;const dataKey=findKey(row,'data de inicio','data de início','data inicio','start date','data','inicio','start');const di=toISO(dataKey?row[dataKey]:col(rn,'data de inicio','data de início','data inicio','start date','data','inicio','start'));if(!di||di<CUT)continue;const statusKey=findKey(row,'status','estado','situacao','situação','fase');const status=String(statusKey?row[statusKey]:(col(rn,'status','estado','situacao')||'')).trim();const snk=nk(status);const realizado=snk.includes('conclu')||snk.includes('done')||snk.includes('finaliz')||snk.includes('complet');const rotKey=findKey(row,'rotulos','rótulos','labels','etiquetas','tags','categorias','tipo');const rs=String(rotKey?row[rotKey]:(col(rn,'rotulos','rótulos','labels','etiquetas','tags')||''));const projs=[];for(const part of rs.split(/[;,|\/]/)){const p=nP(part.trim());if(p&&!projs.includes(p))projs.push(p);}if(!projs.length){const p=nP(nome);if(p)projs.push(p);}if(!projs.length){for(const token of nome.split(/[\s\-_\/\\|,;]+/)){const p=nP(token);if(p&&!projs.includes(p)){projs.push(p);break;}}}if(!projs.length){for(const v of Object.values(rn)){const vs=String(v||'').trim();if(!vs||vs.length>80)continue;const p=nP(vs);if(p&&!projs.includes(p))projs.push(p);}}const clKey=findKey(row,'itens da lista de verificacao','itens da lista de verificação','checklist','itens');const clRaw=String(clKey?row[clKey]:(col(rn,'itens da lista de verificacao','itens da lista de verificação','checklist','itens')||''));const checks={};let hpR=null,hrR=null;for(const item of(clRaw.includes(';')?clRaw.split(';'):clRaw.split(/\n|\r/))){const eq=item.indexOf('=');if(eq<0)continue;const k=item.slice(0,eq).trim(),v=item.slice(eq+1).trim(),kl=nk(k);if(kl.includes('horas planejadas')){hpR=v;continue;}if(kl.includes('horas realizadas')){hrR=v;continue;}if(k)checks[k]=v||'NA';}const notasKey=findKey(row,'notas','notes','observacoes','observações','comentarios','comentários');const notas=String(notasKey?row[notasKey]:(col(rn,'notas','notes','observacoes','observações')||''));if(!hpR){const m=notas.match(/[Hh]oras?\s*[Pp]lanejadas?\s*[=:]\s*([\dh:., ]+)/);if(m)hpR=m[1];}if(!hrR){const m=notas.match(/[Hh]oras?\s*[Rr]ealizadas?\s*[=:]\s*([\dhH:., ]+)/)||notas.match(/[Dd]ura[cç][aã]o\s*[=:]\s*([\dhH:., ]+)/);if(m)hrR=m[1];}const pnQty=extrairPNQty(notas);res.push({nome,di,projs,status,realizado,hPlan:pH(hpR),hReal:pH(hrR,notas),checks,pnQty});}return res.sort((a,b)=>a.di.localeCompare(b.di));}
-function parseHH(wb){const sn=wb.SheetNames[0],ws=wb.Sheets[sn];const rows=XLSX.utils.sheet_to_json(ws,{defval:'',raw:false});const rowsR=XLSX.utils.sheet_to_json(ws,{defval:'',raw:true});return rows.map((r,i)=>{const rn={},rnR={};for(const k of Object.keys(r))rn[nk(k)]=r[k];const rr=rowsR[i]||{};for(const k of Object.keys(rr))rnR[nk(k)]=rr[k];const data=toISO(rnR['data']||rnR['Data']||rn['data']||'');if(!data||data<CUT)return null;const pnStr=String(rn['pn']||rn['p n']||'').trim();const projRaw=String(rn['projeto']||'').trim();const proj=nP(projRaw)||nP(pnStr);const qty=Number(rn['quantidade']||0);const occ=String(rn['ocorrencia']||rn['ocorrência']||'').trim();const com=String(rn['comentario']||rn['comentário']||'').trim();const iniRaw=rnR['inicio']||rnR['Inicio']||rn['inicio']||'';const fimRaw=rnR['fim']||rnR['Fim']||rn['fim']||'';return{pn:pnStr,proj,data,qty,occ:occ||com,ini:iniRaw,fim:fimRaw};}).filter(r=>r&&r.data);}
+function parseHH(wb){const sn=wb.SheetNames[0],ws=wb.Sheets[sn];const rows=XLSX.utils.sheet_to_json(ws,{defval:'',raw:false});const rowsR=XLSX.utils.sheet_to_json(ws,{defval:'',raw:true});return rows.map((r,i)=>{const rn={},rnR={};for(const k of Object.keys(r))rn[nk(k)]=r[k];const rr=rowsR[i]||{};for(const k of Object.keys(rr))rnR[nk(k)]=rr[k];const data=toISO(rnR['data']||rnR['Data']||rn['data']||'');if(!data||data<CUT)return null;const pnStr=String(rn['pn']||rn['p n']||'').trim();const projRaw=String(rn['projeto']||'').trim();const proj=nP(projRaw)||nP(pnStr);const qty=Number(rn['quantidade']||0);const occ=String(rn['ocorrencia']||rn['ocorr\u00EAncia']||'').trim();const com=String(rn['comentario']||rn['coment\u00E1rio']||'').trim();const iniRaw=rnR['inicio']||rnR['Inicio']||rn['inicio']||'';const fimRaw=rnR['fim']||rnR['Fim']||rn['fim']||'';return{pn:pnStr,proj,data,qty,occ:occ||com,ini:iniRaw,fim:fimRaw};}).filter(r=>r&&r.data);}
 function abrirUp(){if(SM)return;rFL();g('uploadOverlay').classList.add('show');}
 function fecharUpload(){g('uploadOverlay').classList.remove('show');}
 (function(){
@@ -304,9 +316,9 @@ function sP(p){sel=sel===p?null:p;rBt();rScr();}
 function gC(p){return p?cron.filter(r=>r.projs.includes(p)):[...cron];}
 function gH(p){return p?hh.filter(r=>r.proj===p):[...hh];}
 function rScr(){const cr=gC(sel),hr=gH(sel);g('tblTitle').textContent='\u23F1\uFE0F '+(sel?'Horas \u00D7 TryOut \u00B7 '+sel:'Horas Planejadas \u00D7 Realizadas \u2014 Todos');const realizados=cr.filter(r=>r.realizado||r.di<=TODAY);const futuros=cr.filter(r=>!r.realizado&&r.di>TODAY);g('tblBadge').textContent=realizados.length+' realizados'+(futuros.length?' \u00B7 '+futuros.length+' futuros':'');rTabela(cr);rPec(sel,cr,hr);rOcc(hr);rChk(cr);}
-function rTabela(cr){const tbody=g('tblBody');if(!cr.length){tbody.innerHTML='<tr><td colspan="6" class="empty">Sem dados</td></tr>';return;}tbody.innerHTML=cr.map((r,i)=>{const realizado=r.realizado||r.di<=TODAY;let hrVal=null;if(r.hReal!=null)hrVal=r.hReal;else if(realizado){const mhh=hh.filter(h=>h.data===r.di&&r.projs.some(p=>h.proj===p));hrVal=mhh.reduce((s,h)=>{let d=pM(h.fim)-pM(h.ini);if(d<0)d+=1440;return s+d;},0)/60;}const delta=hrVal!=null&&r.hPlan!=null?hrVal-r.hPlan:null;const deltaStr=delta==null?'--':delta===0?'0h':delta>0?'+'+fH2(delta):'-'+fH2(Math.abs(delta));const deltaCls=delta==null?'':delta>0?'delta-nok':delta<0?'delta-ok':'delta-eq';const cor=projCor(r.projs[0]||'');return'<tr style="background:'+(i%2===0?'#fff':'#fafafe')+'"><td>'+fmtData(r.di)+'</td><td><span class="proj-pill" style="background:'+cor+'18;color:'+cor+'">'+r.projs.join(', ')+'</span></td><td>'+(r.hPlan!=null?fH2(r.hPlan):'--')+'</td><td>'+(hrVal!=null?fH2(hrVal):'--')+'</td><td class="'+deltaCls+'">'+deltaStr+'</td><td><span class="status-pill '+(realizado?'s-ok':'s-fut')+'">'+(realizado?'\u2705 Realizado':'\uD83D\uDD52 Futuro')+'</span></td></tr>';}).join('');}
+function rTabela(cr){const tbody=g('tblBody');if(!cr.length){tbody.innerHTML='<tr><td colspan="5" class="empty">Sem dados</td></tr>';return;}tbody.innerHTML=cr.map((r,i)=>{const realizado=r.realizado||r.di<=TODAY;let hrVal=null;if(r.hReal!=null)hrVal=r.hReal;else if(realizado){const mhh=hh.filter(h=>h.data===r.di&&r.projs.some(p=>h.proj===p));hrVal=mhh.reduce((s,h)=>{let d=pM(h.fim)-pM(h.ini);if(d<0)d+=1440;return s+d;},0)/60;}const cor=projCor(r.projs[0]||'');return'<tr style="background:'+(i%2===0?'#fff':'#fafafe')+'"><td>'+fmtData(r.di)+'</td><td><span class="proj-pill" style="background:'+cor+'18;color:'+cor+'">'+r.projs.join(', ')+'</span></td><td>'+(r.hPlan!=null?fH2(r.hPlan):'--')+'</td><td>'+(hrVal!=null?fH2(hrVal):'--')+'</td><td><span class="'+(realizado?'s-ok':'s-fut')+'">'+(realizado?'\u2705 Realizado':'\uD83D\uDD52 Futuro')+'</span></td></tr>';}).join('');}
 function rPec(proj,cr,hr){const pm=calcPecas(cr,hr);const tot=Object.values(pm).reduce((s,v)=>s+v.q,0);g('pVal').textContent=tot?tot.toLocaleString('pt-BR'):'--';g('pProj').textContent=proj||'total geral';}
-function rOcc(hr){const w=g('occList');if(!hr.length){w.innerHTML='<div class="empty">Sem dados hora\u00D7hora</div>';return;}const ac={};for(const r of hr){const oc=(r.occ||'').trim();if(!oc)continue;const ocN=nk(oc);if(SKIP.has(ocN))continue;if(!r.ini||!r.fim)continue;let d=pM(r.fim)-pM(r.ini);if(d<0)d+=1440;if(d<=0)continue;ac[oc]=(ac[oc]||0)+d;}const sorted=Object.entries(ac).sort((a,b)=>b[1]-a[1]);if(!sorted.length){w.innerHTML='<div class="empty">Nenhuma ocorr\u00EAncia registrada</div>';return;}const mx=sorted[0][1];w.innerHTML=sorted.map(([oc,m])=>'<div class="occ-item"><span class="occ-name" title="'+oc+'">'+tr2(oc,18)+'</span><div class="occ-bar-wrap"><div class="occ-bar" style="width:'+Math.round(m/mx*100)+'%"></div></div><span class="occ-time">'+fM(m)+'</span></div>').join('');}
+function rOcc(hr){const w=g('occList');if(!hr.length){w.innerHTML='<div class="empty">Sem dados hora\u00D7hora</div>';return;}const ac={};for(const r of hr){const oc=(r.occ||'').trim();if(!oc)continue;const ocN=nk(oc);if(SKIP.has(ocN))continue;if(!r.ini||!r.fim)continue;let d=pM(r.fim)-pM(r.ini);if(d<0)d+=1440;if(d<=0)continue;ac[oc]=(ac[oc]||0)+d;}const sorted=Object.entries(ac).sort((a,b)=>b[1]-a[1]);if(!sorted.length){w.innerHTML='<div class="empty">Nenhuma ocorr\u00EAncia registrada</div>';return;}const mx=sorted[0][1];w.innerHTML=sorted.map(([oc,m])=>'<div class="occ-item"><span class="occ-name" title="'+oc+'">'+tr2(oc,16)+'</span><div class="occ-bar-wrap"><div class="occ-bar" style="width:'+Math.round(m/mx*100)+'%"></div></div><span class="occ-time">'+fM(m)+'</span></div>').join('');}
 function rChk(cr){const sub=g('chkSub'),grid=g('chkGrid');const realized=cr.filter(r=>r.realizado||r.di<=TODAY);const ult=realized[realized.length-1];if(!ult){sub.textContent='';grid.innerHTML='<div class="empty">Sem TryOut realizado</div>';return;}if(!Object.keys(ult.checks||{}).length){sub.textContent='';grid.innerHTML='<div class="empty">Sem checklist dispon\u00EDvel</div>';return;}const[y,m,d]=ult.di.split('-');sub.textContent=tr2(ult.nome,36)+' \u00B7 '+d+'/'+m+'/'+y;grid.innerHTML=Object.entries(ult.checks).map(([n,v])=>{const vv=nk(v);let cls='ck-oth',lb=v;if(vv==='ok'){cls='ck-ok';lb='\u2705 OK';}else if(vv==='nok'||vv==='not ok'){cls='ck-nok';lb='\u274C NOK';}else if(vv==='na'||vv==='n/a'){cls='ck-na';lb='NA';}return'<div class="chk-card"><span class="chk-name">'+n+'</span><span class="chk-badge '+cls+'">'+lb+'</span></div>';}).join('');}
 function setStatus(tipo,title,detail,showLink){const el=g('ghStatus'),tl=g('ghStatusTitle'),dt=g('ghStatusDetail'),lk=g('ghStatusLink');el.className='gh-status show '+tipo;tl.textContent=title;dt.textContent=detail;if(showLink){lk.classList.add('show');g('ghStatusLinkText').textContent=SHARE_LINK;}else{lk.classList.remove('show');}}
 async function publicarGH(){const token=g('ghToken').value.trim();if(!token){toast('Cole seu token GitHub no campo acima');return;}localStorage.setItem('gh_token',token);const btn=g('pubBtn'),txt=g('pubBtnTxt');btn.disabled=true;txt.innerHTML='<div class="spinner"></div> Publicando...';setStatus('info','Enviando dados...','Aguarde');let ppap=null;try{const ps=localStorage.getItem('AumovioDocV1');if(ps)ppap=JSON.parse(ps);}catch{}try{const payload=JSON.stringify({cron,hh,ppap,exportedAt:new Date().toISOString()});const b64=btoa(unescape(encodeURIComponent(payload)));let sha='';const chk=await fetch('https://api.github.com/repos/'+GH_USER+'/'+GH_REPO+'/contents/dados.json',{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}});if(chk.ok){const j=await chk.json();sha=j.sha||'';}else if(chk.status!==404){const e=await chk.json().catch(()=>({}));setStatus('err','\u274C Erro',e.message||('HTTP '+chk.status));btn.disabled=false;txt.textContent='\u21B3 Publicar e Copiar Link';return;}const body={message:'Dashboard update '+TODAY,content:b64,branch:GH_BRANCH};if(sha)body.sha=sha;const res=await fetch('https://api.github.com/repos/'+GH_USER+'/'+GH_REPO+'/contents/dados.json',{method:'PUT',headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify(body)});if(res.ok){setStatus('ok','\u2705 Publicado!','Enviado em '+new Date().toLocaleTimeString('pt-BR'),true);navigator.clipboard.writeText(SHARE_LINK).then(()=>toast('\u2705 Publicado! Link copiado!')).catch(()=>toast('\u2705 Publicado!'));}else{const e=await res.json().catch(()=>({}));setStatus('err','\u274C Erro',e.message||('HTTP '+res.status));}}catch(e){setStatus('err','\u274C Falha de rede',e.message);}btn.disabled=false;txt.textContent='\u21B3 Publicar e Copiar Link';}
