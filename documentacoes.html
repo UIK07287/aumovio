@@ -16,8 +16,6 @@
   --gray:#95A5A6;--border:#E0E0E0;
 }
 body{font-family:'Roboto',sans-serif;background:var(--bg);color:var(--dark);font-size:11px;overflow-x:hidden}
-
-/* NAV */
 .top-nav{background:var(--grad-h);padding:0 16px;display:flex;align-items:center;height:48px;box-shadow:0 2px 8px rgba(0,0,0,.25);position:sticky;top:0;z-index:100}
 .nav-logo{display:flex;align-items:center;gap:8px;padding-right:14px;border-right:1px solid rgba(255,255,255,.25);cursor:pointer;user-select:none;flex-shrink:0}
 .nav-logo-icon{width:30px;height:30px;background:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:10px;color:var(--red)}
@@ -27,8 +25,6 @@ body{font-family:'Roboto',sans-serif;background:var(--bg);color:var(--dark);font
 .nav-tab{color:rgba(255,255,255,.75);font-size:10px;font-weight:500;padding:0 12px;height:48px;text-decoration:none;display:flex;align-items:center;gap:4px;border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap}
 .nav-tab:hover{background:rgba(255,255,255,.1);color:#fff}
 .nav-tab.active{color:#fff;border-bottom:3px solid var(--yellow);background:rgba(255,255,255,.08)}
-
-/* LAYOUT */
 .page-wrapper{display:flex;flex-direction:column;height:calc(100vh - 48px);overflow:hidden}
 .frozen-bar{background:#fff;border-bottom:2px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,.07);flex-shrink:0}
 .proj-bar{padding:7px 16px 8px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
@@ -40,12 +36,8 @@ body{font-family:'Roboto',sans-serif;background:var(--bg);color:var(--dark);font
 .btn-limpar{background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:9px;color:var(--gray);cursor:pointer;margin-left:4px}
 .btn-limpar:hover{border-color:var(--red);color:var(--red)}
 .scroll-area{flex:1;overflow-y:auto;padding:10px 16px 14px;display:flex;flex-direction:column;gap:10px}
-
-/* DROP ZONE */
 .drop-zone-page{border:2px dashed var(--purple);border-radius:14px;padding:48px 20px;text-align:center;cursor:pointer;background:#fff;transition:all .2s;box-shadow:0 2px 12px rgba(0,0,0,.06)}
 .drop-zone-page:hover,.drop-zone-page.dragover{background:#f3eeff;border-color:var(--orange)}
-
-/* PPAP */
 .ppap-card{background:#fff;border-radius:10px;border:1px solid var(--border);box-shadow:0 1px 6px rgba(0,0,0,.05);overflow:hidden}
 .ppap-hdr{background:var(--grad-h);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
 .ppap-proj{color:#fff;font-size:13px;font-weight:700}
@@ -61,8 +53,6 @@ body{font-family:'Roboto',sans-serif;background:var(--bg);color:var(--dark);font
 .leg-row{display:flex;gap:12px;padding:7px 14px;background:#fafafa;border-bottom:1px solid var(--border);flex-wrap:wrap}
 .leg-item{display:flex;align-items:center;gap:5px;font-size:9px;color:#555}
 .leg-dot{width:9px;height:9px;border-radius:3px;flex-shrink:0}
-
-/* TABELA */
 .tbl-wrap{overflow-x:auto}
 .tbl{width:100%;border-collapse:collapse;font-size:10px}
 .tbl thead th{background:var(--dark);color:#fff;padding:7px 12px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
@@ -80,10 +70,7 @@ body{font-family:'Roboto',sans-serif;background:var(--bg);color:var(--dark);font
 .bna{background:#f5f5f5;color:#757575}
 .bpend{background:#f5f5f5;color:#bbb;font-style:italic}
 .empty{text-align:center;padding:32px;color:var(--gray);font-size:11px}
-
 @media(max-width:680px){.nav-title{display:none}.ppap-kpis{display:none}}
-
-/* TOAST */
 .toast{position:fixed;bottom:18px;right:18px;background:var(--dark);color:#fff;padding:8px 15px;border-radius:7px;font-size:11px;box-shadow:0 4px 16px rgba(0,0,0,.2);z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none}
 .toast.show{opacity:1}
 </style>
@@ -126,7 +113,9 @@ body{font-family:'Roboto',sans-serif;background:var(--bg);color:var(--dark);font
 <script>
 const GH_RAW='https://raw.githubusercontent.com/UIK07287/aumovio/main';
 const DBK='AumovioDocV1';
-const SHARED=location.protocol==='https:'&&location.hostname.includes('github.io')&&new URLSearchParams(location.search).get('shared')==='1';
+
+/* ✅ DETECÇÃO POR DOMÍNIO */
+const SHARED=location.hostname.includes('github.io');
 
 const g=id=>document.getElementById(id);
 const nk=s=>String(s).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
@@ -138,7 +127,7 @@ function toast(msg){const t=g('toast');t.textContent=msg;t.classList.add('show')
 
 /* oculta upload no modo compartilhado */
 if(SHARED){
-  document.getElementById('btnUpload').style.display='none';
+  g('btnUpload').style.display='none';
 }
 
 function projCor(p){
@@ -188,10 +177,7 @@ function parsePPAP(wb){
 
 function calcStats(items){
   let ok=0,nok=0,nos=0;
-  for(const it of items){
-    const s=nk(it.status);
-    if(s==='ok')ok++;else if(s==='nok')nok++;else if(s==='nos')nos++;
-  }
+  for(const it of items){const s=nk(it.status);if(s==='ok')ok++;else if(s==='nok')nok++;else if(s==='nos')nos++;}
   return{ok,nok,nos,pct:items.length?Math.round((ok/items.length)*100):0,total:items.length};
 }
 
@@ -229,10 +215,11 @@ function renderDropZone(){
     +'<div style="font-size:40px;margin-bottom:12px;opacity:.4">&#128196;</div>'
     +'<div style="font-size:13px;font-weight:700;color:var(--purple);margin-bottom:6px">Carregue o PPAP Checklist</div>'
     +'<div style="font-size:10px;color:var(--gray);margin-bottom:16px">Arraste o arquivo <strong>PPAP_Checklist.xlsx</strong> ou clique para selecionar</div>'
-    +'<button style="background:var(--grad);color:#fff;border:none;border-radius:8px;padding:9px 24px;font-size:11px;font-weight:700;cursor:pointer" onclick="event.stopPropagation();g(\'fi\').click()">&#128193; Selecionar Arquivo</button>'
+    +(SHARED?'<div style="font-size:10px;color:var(--gray)">Aguardando publica\u00E7\u00E3o pelo administrador</div>'
+      :'<button style="background:var(--grad);color:#fff;border:none;border-radius:8px;padding:9px 24px;font-size:11px;font-weight:700;cursor:pointer" onclick="event.stopPropagation();g(\'fi\').click()">&#128193; Selecionar Arquivo</button>')
     +'</div>';
   const dz=g('dz');
-  if(dz){
+  if(dz&&!SHARED){
     dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('dragover');});
     dz.addEventListener('dragleave',()=>dz.classList.remove('dragover'));
     dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('dragover');const f=[...e.dataTransfer.files].find(f=>f.name.toLowerCase().endsWith('.xlsx'));if(f)lerArquivo(f);else toast('Selecione um .xlsx');});
@@ -281,7 +268,7 @@ function renderPPAP(){
     +'</div>';
 
   html+='<div class="tbl-wrap"><table class="tbl"><thead><tr>'
-    +'<th style="width:50px">Item</th><th>Descri\u00E7\u00E3o</th><th class="center" style="width:110px">Status</th>'
+    +'<th style="width:50px">Item</th><th>Descri\u00E7\u00E3o</th><th style="text-align:center;width:110px">Status</th>'
     +'</tr></thead><tbody>';
 
   let lastSec='';
@@ -309,7 +296,6 @@ function renderPPAP(){
   wrap.innerHTML=html;
 }
 
-/* INIT */
 (async function(){
   if(SHARED){
     try{
@@ -320,6 +306,7 @@ function renderPPAP(){
           ppapData=data.ppap;
           selProj=Object.keys(ppapData)[0];
           renderProjBtns();renderPPAP();
+          toast('\u2705 Documenta\u00E7\u00F5es carregadas!');
           return;
         }
       }
