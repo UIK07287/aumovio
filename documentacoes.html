@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Documenta&#231;&#245;es | AUMOVIO</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --red:#FF5722;--orange:#FF6F3C;--yellow:#FFC107;
+  --purple:#6B4C9A;--grad:linear-gradient(135deg,#FF5722,#FF6F3C,#FFC107);
+  --grad-h:linear-gradient(90deg,#FF5722,#6B4C9A);
+  --green:#4CAF50;--bg:#F0F2F5;--dark:#2C3E50;
+  --gray:#95A5A6;--border:#E0E0E0;
+}
+body{font-family:'Roboto',sans-serif;background:var(--bg);color:var(--dark);font-size:11px;overflow-x:hidden}
+
+/* NAV */
+.top-nav{background:var(--grad-h);padding:0 16px;display:flex;align-items:center;height:48px;box-shadow:0 2px 8px rgba(0,0,0,.25);position:sticky;top:0;z-index:100}
+.nav-logo{display:flex;align-items:center;gap:8px;padding-right:14px;border-right:1px solid rgba(255,255,255,.25);cursor:pointer;user-select:none;flex-shrink:0}
+.nav-logo-icon{width:30px;height:30px;background:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:10px;color:var(--red)}
+.nav-logo-text{color:#fff;font-weight:700;font-size:12px;letter-spacing:1px}
+.nav-title{flex:1;text-align:center;color:rgba(255,255,255,.9);font-size:11px;font-weight:600;padding:0 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav-tabs{display:flex;border-left:1px solid rgba(255,255,255,.2);padding-left:6px;margin-left:auto}
+.nav-tab{color:rgba(255,255,255,.75);font-size:10px;font-weight:500;padding:0 12px;height:48px;text-decoration:none;display:flex;align-items:center;gap:4px;border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap}
+.nav-tab:hover{background:rgba(255,255,255,.1);color:#fff}
+.nav-tab.active{color:#fff;border-bottom:3px solid var(--yellow);background:rgba(255,255,255,.08)}
+
+/* LAYOUT */
+.page-wrapper{display:flex;flex-direction:column;height:calc(100vh - 48px);overflow:hidden}
+.frozen-bar{background:#fff;border-bottom:2px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,.07);flex-shrink:0}
+.proj-bar{padding:7px 16px 8px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.proj-label{font-size:9px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.5px;margin-right:4px;white-space:nowrap}
+.proj-btn{padding:4px 12px;border:2px solid var(--orange);border-radius:18px;background:#fff;color:var(--orange);font-size:10px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap;display:flex;align-items:center;gap:5px}
+.proj-btn:hover,.proj-btn.active{background:var(--orange);color:#fff}
+.proj-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.btn-upload{background:var(--grad);color:#fff;border:none;border-radius:8px;padding:5px 14px;font-size:10px;font-weight:700;cursor:pointer;margin-left:auto;white-space:nowrap}
+.btn-limpar{background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:9px;color:var(--gray);cursor:pointer;margin-left:4px}
+.btn-limpar:hover{border-color:var(--red);color:var(--red)}
+.scroll-area{flex:1;overflow-y:auto;padding:10px 16px 14px;display:flex;flex-direction:column;gap:10px}
+
+/* DROP ZONE */
+.drop-zone-page{border:2px dashed var(--purple);border-radius:14px;padding:48px 20px;text-align:center;cursor:pointer;background:#fff;transition:all .2s;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.drop-zone-page:hover,.drop-zone-page.dragover{background:#f3eeff;border-color:var(--orange)}
+
+/* PPAP */
+.ppap-card{background:#fff;border-radius:10px;border:1px solid var(--border);box-shadow:0 1px 6px rgba(0,0,0,.05);overflow:hidden}
+.ppap-hdr{background:var(--grad-h);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.ppap-proj{color:#fff;font-size:13px;font-weight:700}
+.ppap-meta{color:rgba(255,255,255,.8);font-size:9px;margin-top:2px}
+.ppap-kpis{display:flex;gap:6px}
+.ppap-kpi{background:rgba(255,255,255,.15);border-radius:7px;padding:5px 10px;text-align:center;min-width:55px}
+.ppap-kpi-val{font-size:15px;font-weight:700;color:#fff;line-height:1}
+.ppap-kpi-lbl{font-size:8px;color:rgba(255,255,255,.8);margin-top:1px;text-transform:uppercase}
+.prog-wrap{padding:8px 14px;background:#f8f8f8;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.prog-bar{flex:1;height:7px;background:#e0e0e0;border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;border-radius:4px;transition:width .5s}
+.prog-pct{font-size:11px;font-weight:700;color:var(--purple);white-space:nowrap}
+.leg-row{display:flex;gap:12px;padding:7px 14px;background:#fafafa;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:9px;color:#555}
+.leg-dot{width:9px;height:9px;border-radius:3px;flex-shrink:0}
+
+/* TABELA */
+.tbl-wrap{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;font-size:10px}
+.tbl thead th{background:var(--dark);color:#fff;padding:7px 12px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.tbl tbody tr{border-bottom:1px solid #f0f0f0;transition:background .12s}
+.tbl tbody tr:hover td{background:#f9f7ff}
+.tbl td{padding:8px 12px;vertical-align:middle}
+.sec-row td{background:linear-gradient(90deg,#f3eeff,#fafafa);font-size:8.5px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.5px;border-left:3px solid var(--purple)}
+.item-num{font-size:10px;font-weight:700;color:var(--purple);width:50px}
+.item-desc{font-size:10px;line-height:1.5}
+.st-cell{text-align:center;width:110px}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:16px;font-size:9px;font-weight:700;white-space:nowrap}
+.bok{background:#e8f5e9;color:#2e7d32}
+.bnok{background:#ffebee;color:#c62828}
+.bnos{background:#fff8e1;color:#e65100}
+.bna{background:#f5f5f5;color:#757575}
+.bpend{background:#f5f5f5;color:#bbb;font-style:italic}
+.empty{text-align:center;padding:32px;color:var(--gray);font-size:11px}
+
+@media(max-width:680px){.nav-title{display:none}.ppap-kpis{display:none}}
+
+/* TOAST */
+.toast{position:fixed;bottom:18px;right:18px;background:var(--dark);color:#fff;padding:8px 15px;border-radius:7px;font-size:11px;box-shadow:0 4px 16px rgba(0,0,0,.2);z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <div class="nav-logo">
+    <div class="nav-logo-icon">&#9650;A</div>
+    <span class="nav-logo-text">AUMOVIO</span>
+  </div>
+  <div class="nav-title">Electronic Manufacturing / NPL &#8212; Documenta&#231;&#245;es</div>
+  <div class="nav-tabs">
+    <a class="nav-tab" href="dashboard.html">&#127968; Dashboard</a>
+    <a class="nav-tab" href="monitoramento.html">&#128202; Monitoramento</a>
+    <a class="nav-tab active" href="documentacoes.html">&#128196; Documenta&#231;&#245;es</a>
+  </div>
+</nav>
+
+<div class="page-wrapper">
+  <div class="frozen-bar">
+    <div class="proj-bar">
+      <span class="proj-label">Projetos:</span>
+      <span id="projBtns" style="display:flex;gap:5px;flex-wrap:wrap">
+        <span style="color:#95A5A6;font-size:10px">Carregue o PPAP_Checklist.xlsx</span>
+      </span>
+      <button class="btn-upload" id="btnUpload" onclick="g('fi').click()">&#128194; Carregar PPAP</button>
+      <button class="btn-limpar" id="btnLimpar" onclick="limpar()" style="display:none">&#128465; Limpar</button>
+    </div>
+  </div>
+
+  <div class="scroll-area">
+    <div id="ppapContent"></div>
+  </div>
+</div>
+
+<input type="file" id="fi" accept=".xlsx" style="display:none">
+<div class="toast" id="toast"></div>
+
+<script>
+const GH_RAW='https://raw.githubusercontent.com/UIK07287/aumovio/main';
+const DBK='AumovioDocV1';
+const SHARED=location.protocol==='https:'&&location.hostname.includes('github.io')&&new URLSearchParams(location.search).get('shared')==='1';
+
+const g=id=>document.getElementById(id);
+const nk=s=>String(s).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+
+let ppapData={},selProj=null;
+let _tt;
+
+function toast(msg){const t=g('toast');t.textContent=msg;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),3200);}
+
+/* oculta upload no modo compartilhado */
+if(SHARED){
+  document.getElementById('btnUpload').style.display='none';
+}
+
+function projCor(p){
+  const c={'CM4':'#FF5722','BVDR 2.1':'#00695C','BSG MAN 2026':'#1565C0','CONVERSOR 18A':'#E65100','MTCO 2.0':'#6A1B9A','MAN PRIME':'#1B5E20','PTM':'#880E4F','BCM SEAR2':'#FF5722','DCDC':'#E65100','SCANIA':'#1B5E20'};
+  return c[p]||'#6B4C9A';
+}
+
+g('fi').addEventListener('change',function(){if(this.files[0])lerArquivo(this.files[0]);this.value='';});
+
+function lerArquivo(file){
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array'});
+      ppapData=parsePPAP(wb);
+      const projs=Object.keys(ppapData);
+      if(!projs.length){toast('Nenhum dado PPAP encontrado');return;}
+      try{localStorage.setItem(DBK,JSON.stringify(ppapData));}catch{}
+      selProj=projs[0];
+      renderProjBtns();renderPPAP();
+      toast('\u2705 '+projs.length+' projeto(s) carregado(s)');
+    }catch(e){console.error(e);toast('Erro ao ler arquivo');}
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function parsePPAP(wb){
+  const result={};
+  for(const sheetName of wb.SheetNames){
+    const ws=wb.Sheets[sheetName];
+    const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+    if(!rows.length)continue;
+    const items=[];let inItems=false;
+    for(const row of rows){
+      const c0=String(row[0]||'').trim();
+      const c1=String(row[1]||'').trim();
+      const c2=String(row[2]||'').trim();
+      if(nk(c0)==='item'&&nk(c1).includes('element')){inItems=true;continue;}
+      if(!inItems)continue;
+      if(!c0&&!c1)continue;
+      items.push({item:c0,desc:c1,status:c2||''});
+    }
+    if(items.length)result[sheetName]=items;
+  }
+  return result;
+}
+
+function calcStats(items){
+  let ok=0,nok=0,nos=0;
+  for(const it of items){
+    const s=nk(it.status);
+    if(s==='ok')ok++;else if(s==='nok')nok++;else if(s==='nos')nos++;
+  }
+  return{ok,nok,nos,pct:items.length?Math.round((ok/items.length)*100):0,total:items.length};
+}
+
+function renderProjBtns(){
+  const projs=Object.keys(ppapData);
+  const span=g('projBtns');
+  if(!projs.length){
+    span.innerHTML='<span style="color:#95A5A6;font-size:10px">Carregue o PPAP_Checklist.xlsx</span>';
+    g('btnLimpar').style.display='none';return;
+  }
+  g('btnLimpar').style.display='';
+  span.innerHTML=projs.map(p=>{
+    const st=calcStats(ppapData[p]);
+    const cor=st.pct>=100?'#4CAF50':st.pct>0?'#FF9800':'#95A5A6';
+    return'<button class="proj-btn'+(selProj===p?' active':'')+'" onclick="selP(\''+p+'\')">'
+      +'<span class="proj-dot" style="background:'+cor+'"></span>'
+      +p+' <span style="font-size:8px;opacity:.7">('+st.pct+'%)</span>'
+      +'</button>';
+  }).join('');
+}
+
+function selP(p){selProj=p;renderProjBtns();renderPPAP();}
+
+function limpar(){
+  if(!confirm('Apagar dados do PPAP?'))return;
+  ppapData={};selProj=null;
+  try{localStorage.removeItem(DBK);}catch{}
+  renderProjBtns();renderDropZone();
+  toast('Dados removidos');
+}
+
+function renderDropZone(){
+  const wrap=g('ppapContent');
+  wrap.innerHTML='<div class="drop-zone-page" id="dz">'
+    +'<div style="font-size:40px;margin-bottom:12px;opacity:.4">&#128196;</div>'
+    +'<div style="font-size:13px;font-weight:700;color:var(--purple);margin-bottom:6px">Carregue o PPAP Checklist</div>'
+    +'<div style="font-size:10px;color:var(--gray);margin-bottom:16px">Arraste o arquivo <strong>PPAP_Checklist.xlsx</strong> ou clique para selecionar</div>'
+    +'<button style="background:var(--grad);color:#fff;border:none;border-radius:8px;padding:9px 24px;font-size:11px;font-weight:700;cursor:pointer" onclick="event.stopPropagation();g(\'fi\').click()">&#128193; Selecionar Arquivo</button>'
+    +'</div>';
+  const dz=g('dz');
+  if(dz){
+    dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('dragover');});
+    dz.addEventListener('dragleave',()=>dz.classList.remove('dragover'));
+    dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('dragover');const f=[...e.dataTransfer.files].find(f=>f.name.toLowerCase().endsWith('.xlsx'));if(f)lerArquivo(f);else toast('Selecione um .xlsx');});
+    dz.addEventListener('click',e=>{if(e.target.tagName==='BUTTON')return;g('fi').click();});
+  }
+}
+
+function getSec(item){
+  const n=parseFloat(item);
+  if(n>=1&&n<=4)return'\uD83D\uDCD0 Registros de Design & Engenharia';
+  if(n>=5&&n<=7)return'\u2699\uFE0F Processo & Controle';
+  if(n>=8&&n<9)return'\uD83D\uDCCF Sistema de Medi\u00E7\u00E3o (MSA)';
+  if(n>=9&&n<10)return'\uD83D\uDCCA Resultados Dimensionais';
+  if(n>=10&&n<12)return'\uD83D\uDD2C Testes & Estudos de Processo';
+  if(n>=12&&n<14)return'\uD83C\uDFF7\uFE0F Laborat\u00F3rio & Aprova\u00E7\u00E3o Visual';
+  if(n>=14&&n<17)return'\uD83D\uDCE6 Amostras & Dispositivos';
+  if(n>=17)return'\uD83D\uDCCB Requisitos do Cliente & PSW';
+  return null;
+}
+
+function renderPPAP(){
+  const wrap=g('ppapContent');
+  if(!selProj||!ppapData[selProj]){renderDropZone();return;}
+  const items=ppapData[selProj];
+  const st=calcStats(items);
+  const barColor=st.pct>=100?'#4CAF50':st.pct>=50?'#FF9800':'#F44336';
+
+  let html='<div class="ppap-card">';
+  html+='<div class="ppap-hdr">'
+    +'<div><div class="ppap-proj">'+selProj+'</div><div class="ppap-meta">PPAP Level 3 \u00B7 Electronic Manufacturing \u00B7 NPL TryOut</div></div>'
+    +'<div class="ppap-kpis">'
+    +'<div class="ppap-kpi"><div class="ppap-kpi-val" style="color:#a5d6a7">'+st.ok+'</div><div class="ppap-kpi-lbl">OK</div></div>'
+    +'<div class="ppap-kpi"><div class="ppap-kpi-val" style="color:#ef9a9a">'+st.nok+'</div><div class="ppap-kpi-lbl">NOK</div></div>'
+    +'<div class="ppap-kpi"><div class="ppap-kpi-val" style="color:#ffe082">'+st.nos+'</div><div class="ppap-kpi-lbl">NOS</div></div>'
+    +'<div class="ppap-kpi"><div class="ppap-kpi-val">'+st.total+'</div><div class="ppap-kpi-lbl">Total</div></div>'
+    +'</div></div>';
+
+  html+='<div class="prog-wrap"><div class="prog-bar"><div class="prog-fill" style="width:'+st.pct+'%;background:'+barColor+'"></div></div><span class="prog-pct">'+st.pct+'% conclu\u00EDdo</span></div>';
+
+  html+='<div class="leg-row">'
+    +'<div class="leg-item"><div class="leg-dot" style="background:#4CAF50"></div>OK</div>'
+    +'<div class="leg-item"><div class="leg-dot" style="background:#F44336"></div>NOK</div>'
+    +'<div class="leg-item"><div class="leg-dot" style="background:#FF9800"></div>NOS</div>'
+    +'<div class="leg-item"><div class="leg-dot" style="background:#9E9E9E"></div>N/A</div>'
+    +'<div class="leg-item"><div class="leg-dot" style="background:#E0E0E0"></div>Pendente</div>'
+    +'</div>';
+
+  html+='<div class="tbl-wrap"><table class="tbl"><thead><tr>'
+    +'<th style="width:50px">Item</th><th>Descri\u00E7\u00E3o</th><th class="center" style="width:110px">Status</th>'
+    +'</tr></thead><tbody>';
+
+  let lastSec='';
+  for(const it of items){
+    const sec=getSec(it.item);
+    if(sec&&sec!==lastSec){html+='<tr class="sec-row"><td colspan="3">'+sec+'</td></tr>';lastSec=sec;}
+    const sl=nk(it.status.trim());
+    let badge;
+    if(sl==='ok')badge='<span class="badge bok">\u2705 OK</span>';
+    else if(sl==='nok')badge='<span class="badge bnok">\u274C NOK</span>';
+    else if(sl==='nos')badge='<span class="badge bnos">\u26A0\uFE0F NOS</span>';
+    else if(sl==='n/a'||sl==='na')badge='<span class="badge bna">N/A</span>';
+    else if(it.status.trim())badge='<span class="badge bnos">'+it.status+'</span>';
+    else badge='<span class="badge bpend">Pendente</span>';
+    const isSub=it.item.includes('.');
+    const di=it.desc.indexOf('\u2013');
+    const descHtml=di>0?'<strong>'+it.desc.slice(0,di).trim()+'</strong><span style="color:var(--gray)"> \u2013 '+it.desc.slice(di+1).trim()+'</span>':'<strong>'+it.desc+'</strong>';
+    html+='<tr'+(isSub?' style="background:#fafffe"':'')+'>'
+      +'<td class="item-num">'+(isSub?'<span style="color:#aaa;padding-left:10px">'+it.item+'</span>':it.item)+'</td>'
+      +'<td class="item-desc">'+descHtml+'</td>'
+      +'<td class="st-cell">'+badge+'</td>'
+      +'</tr>';
+  }
+  html+='</tbody></table></div></div>';
+  wrap.innerHTML=html;
+}
+
+/* INIT */
+(async function(){
+  if(SHARED){
+    try{
+      const res=await fetch(GH_RAW+'/dados.json?t='+Date.now());
+      if(res.ok){
+        const data=await res.json();
+        if(data.ppap&&Object.keys(data.ppap).length){
+          ppapData=data.ppap;
+          selProj=Object.keys(ppapData)[0];
+          renderProjBtns();renderPPAP();
+          return;
+        }
+      }
+    }catch{}
+    renderProjBtns();renderDropZone();
+    return;
+  }
+  try{
+    const saved=localStorage.getItem(DBK);
+    if(saved){ppapData=JSON.parse(saved);selProj=Object.keys(ppapData)[0]||null;}
+  }catch{}
+  renderProjBtns();
+  if(selProj)renderPPAP();else renderDropZone();
+})();
+</script>
+</body>
+</html>
