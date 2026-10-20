@@ -98,7 +98,7 @@ body{font-family:'Roboto',sans-serif;background:var(--bg);color:var(--dark);font
       <div class="kpi-card" style="border-left-color:var(--orange)">
         <div class="kpi-lbl" style="color:var(--orange)">Try-outs Realizados</div>
         <div class="kpi-val" id="kT" style="color:var(--orange)">--</div>
-        <div class="kpi-sub" id="kTS">HH + Notas do cronograma</div>
+        <div class="kpi-sub" id="kTS">HH + notas s/ HH</div>
       </div>
       <div class="kpi-card" style="border-left-color:var(--green)">
         <div class="kpi-lbl" style="color:var(--green)">Qtd Produzida</div>
@@ -108,7 +108,7 @@ body{font-family:'Roboto',sans-serif;background:var(--bg);color:var(--dark);font
       <div class="kpi-card" style="border-left-color:var(--purple)">
         <div class="kpi-lbl" style="color:var(--purple)">Total de Horas</div>
         <div class="kpi-val" id="kH" style="color:var(--purple)">--</div>
-        <div class="kpi-sub">linhas c/ PN 92</div>
+        <div class="kpi-sub">registros HH</div>
       </div>
     </div>
   </div>
@@ -164,9 +164,7 @@ let _tt;
 function toast(msg){const t=g('toast');t.textContent=msg;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),3200);}
 
 function projCor(p){const c={'BCM SEAR2':'#FF5722','MTCO 2.0':'#6B4C9A','BVDR 2.1':'#00695C','DCDC':'#E65100','PTM':'#880E4F','CM4':'#1565C0','SCANIA':'#1B5E20'};return c[p]||'#607D8B';}
-
 function normPN(pn){if(!pn)return'';const s=String(pn).trim();const suf=s.slice(-2);return(suf==='91'||suf==='92'||suf==='00')?s.slice(0,-2):s;}
-
 function normProj(p){
   if(!p)return'';const u=String(p).toUpperCase().trim();
   if(/BCM[\s\-_]?SEAR[\s\-_]?2/.test(u))return'BCM SEAR2';
@@ -178,55 +176,49 @@ function normProj(p){
   if(u.includes('SCANIA'))return'SCANIA';
   return p;
 }
-
 function parseTime(v){if(v===null||v===undefined||v==='')return null;if(typeof v==='number')return v*24;const m=String(v).trim().match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);if(!m)return null;return parseInt(m[1])+parseInt(m[2])/60+(parseInt(m[3]||'0'))/3600;}
 function getHoras(r){const ini=parseTime(r.ini||null);const fim=parseTime(r.fim||null);if(ini===null||fim===null)return 0;let d=fim-ini;if(d<0)d+=24;return Math.round(d*100)/100;}
-
 function extrairAno(d){if(!d)return null;const m=String(d).match(/(\d{4})/);return m?m[1]:null;}
 function extrairMes(d){if(!d)return null;return parseInt(String(d).slice(5,7))||null;}
 function extrairSem(d){if(!d)return null;const dt=new Date(String(d).slice(0,10));if(isNaN(dt))return null;const j=new Date(dt.getFullYear(),0,1);return Math.ceil(((dt-j)/86400000+j.getDay()+1)/7);}
 function extrairDia(d){if(!d)return null;return String(d).slice(0,10);}
 
-/* ── PROCESSAMENTO PRINCIPAL ── */
+/* ── PROCESSAMENTO ── */
 function processarDados(){
-  /* conjunto de datas+proj que tem HH */
+  /* datas+proj com HH registrado */
   const hhDatas=new Set();
-  hh.filter(r=>r.pn&&r.pn.endsWith('92')).forEach(r=>{
+  hh.forEach(r=>{
+    if(!r.pn||!r.pn.endsWith('92'))return;
     const p=normProj(r.proj);
     if(p)hhDatas.add(r.data+'||'+p);
   });
 
-  /* registros HH normais */
   const registros=[];
+
+  /* 1 — registros HH com PN 92 */
   hh.filter(r=>r.pn&&r.pn.endsWith('92')).forEach(r=>{
+    const proj=normProj(r.proj);
+    if(!proj)return;
     registros.push({
-      data:r.data,
-      proj:normProj(r.proj),
-      pn:r.pn,
-      pnBase:normPN(r.pn),
+      data:r.data,proj,
+      pn:r.pn,pnBase:normPN(r.pn),
       qty:Number(r.qty)||0,
       horas:getHoras(r),
       fonte:'hh'
     });
   });
 
-  /* registros do cron — só quando NÃO tem HH naquela data+proj */
+  /* 2 — tarefas cron SEM HH naquela data+proj */
   cron.forEach(tarefa=>{
     if(!tarefa.di||tarefa.di<CUT)return;
-    const projs=tarefa.projs||[];
-    if(!projs.length)return;
     if(!(tarefa.pnQty&&tarefa.pnQty.length))return;
-    projs.forEach(proj=>{
-      const chave=tarefa.di+'||'+proj;
-      if(hhDatas.has(chave))return; /* tem HH → ignora notas do cron */
-      /* sem HH nessa data+proj → pega PNs das notas */
+    (tarefa.projs||[]).forEach(proj=>{
+      if(hhDatas.has(tarefa.di+'||'+proj))return; /* tem HH → ignora */
       tarefa.pnQty.forEach(({pn,qty})=>{
         if(!pn)return;
         registros.push({
-          data:tarefa.di,
-          proj,
-          pn,
-          pnBase:normPN(pn),
+          data:tarefa.di,proj,
+          pn,pnBase:normPN(pn),
           qty:qty||0,
           horas:0,
           fonte:'cron'
@@ -238,7 +230,7 @@ function processarDados(){
   dadosProcessados=registros;
 }
 
-/* ── FILTROS ── */
+/* ── SELECTS ── */
 function popularSelects(){
   const datas=dadosProcessados.map(r=>r.data).filter(Boolean);
   const anos=[...new Set(datas.map(extrairAno).filter(Boolean))].sort();
@@ -252,6 +244,7 @@ function popularSelects(){
 }
 function popSel(id,itens,lbl){const s=g(id);s.innerHTML='<option value="">'+lbl+'</option>';itens.forEach(i=>{const o=document.createElement('option');o.value=i.v;o.textContent=i.l;s.appendChild(o);});}
 
+/* ── PROJ BTNS ── */
 function rProjBtns(){
   const projs=[...new Set(dadosProcessados.map(r=>r.proj).filter(Boolean))].sort();
   const w=g('projBtns');
@@ -261,6 +254,7 @@ function rProjBtns(){
 }
 function sP(p){sel=sel===p?null:p;rProjBtns();aplicarFiltros();}
 
+/* ── FILTROS ── */
 function aplicarFiltros(){
   const ano=g('selYear').value,mes=g('selMonth').value,sem=g('selWeek').value,dia=g('selDay').value;
   dadosFiltrados=dadosProcessados.filter(r=>{
@@ -277,16 +271,20 @@ function limparFiltros(){sel=null;['selYear','selMonth','selWeek','selDay'].forE
 
 /* ── RENDER ── */
 function renderTudo(){
-  /* KPI 1 — tryouts únicos: 1 por data+proj */
+  /* KPI 1 — tryouts únicos: 1 por data+proj (HH ou cron sem HH) */
   const tryoutsUnicos=new Set(dadosFiltrados.map(r=>r.data+'||'+r.proj).filter(k=>k.split('||')[1]));
   const porProj={};
   [...tryoutsUnicos].forEach(k=>{const p=k.split('||')[1];porProj[p]=(porProj[p]||0)+1;});
   g('kT').textContent=tryoutsUnicos.size||'--';
   g('kTS').textContent=Object.entries(porProj).sort().map(([p,n])=>p+': '+n).join(' \u00B7 ')||'--';
 
-  /* KPI 2 — qtd sem duplicidade: 1 por pn+data */
+  /* KPI 2 — qtd sem duplicidade: 1 por pnBase+data */
   const prodMapa={};
-  dadosFiltrados.forEach(r=>{const k=r.pnBase+'|'+r.data;if(!prodMapa[k])prodMapa[k]=0;prodMapa[k]+=r.qty;});
+  dadosFiltrados.forEach(r=>{
+    const k=r.pnBase+'|'+r.data;
+    if(!prodMapa[k])prodMapa[k]=0;
+    prodMapa[k]+=r.qty;
+  });
   const totalProd=Object.values(prodMapa).reduce((s,v)=>s+v,0);
   g('kP').textContent=totalProd>0?totalProd.toLocaleString('pt-BR')+' pcs':'--';
 
@@ -303,7 +301,9 @@ function buildTabela(){
     if(!r.pnBase)return;
     const key=r.proj+'||'+r.pnBase;
     if(!mapa[key])mapa[key]={pn:r.pnBase,proj:r.proj,entradas:new Set(),qtdMapa:{},ultimaData:''};
+    /* tryout único por data+proj */
     mapa[key].entradas.add(r.data+'||'+r.proj);
+    /* qty sem duplicidade por pnBase+data */
     const qk=r.pnBase+'|'+r.data;
     if(!mapa[key].qtdMapa[qk])mapa[key].qtdMapa[qk]=0;
     mapa[key].qtdMapa[qk]+=r.qty;
