@@ -72,7 +72,6 @@ body{font-family:'Roboto',sans-serif;background:var(--bg);color:var(--dark);font
 </style>
 </head>
 <body>
-
 <nav class="top-nav">
   <div class="nav-logo">
     <div class="nav-logo-icon">&#9650;A</div>
@@ -85,7 +84,6 @@ body{font-family:'Roboto',sans-serif;background:var(--bg);color:var(--dark);font
     <a class="nav-tab" href="documentacoes.html">&#128196; Documenta&#231;&#245;es</a>
   </div>
 </nav>
-
 <div class="page-wrapper">
   <div class="frozen-bar">
     <div class="proj-bar">
@@ -112,7 +110,6 @@ body{font-family:'Roboto',sans-serif;background:var(--bg);color:var(--dark);font
       </div>
     </div>
   </div>
-
   <div class="scroll-area">
     <div class="filter-bar">
       <span class="filter-label">Per&#237;odo</span>
@@ -122,7 +119,6 @@ body{font-family:'Roboto',sans-serif;background:var(--bg);color:var(--dark);font
       <select class="date-sel" id="selDay" onchange="aplicarFiltros()"><option value="">Dia</option></select>
       <button class="btn-clear" onclick="limparFiltros()">&#215; Limpar</button>
     </div>
-
     <div class="card">
       <div class="card-hdr" style="background:#1a237e">
         <span>&#128202; Produ&#231;&#227;o por PN</span>
@@ -146,44 +142,35 @@ body{font-family:'Roboto',sans-serif;background:var(--bg);color:var(--dark);font
     </div>
   </div>
 </div>
-
 <div class="toast" id="toast"></div>
 
 <script>
 const GH_RAW='https://raw.githubusercontent.com/UIK07287/aumovio/main';
-const CUT='2026-01-01';
 const MESES=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-
-/* ✅ LISTA FECHADA DE PROJETOS VÁLIDOS */
-const PROJS_VALIDOS=new Set(['PTM','BCM SEAR2','MTCO 2.0','BVDR 2.1','DCDC','CM4','COOX']);
+let CFG={projetos:[],filtros:{dataCorte:'2026-01-01',sufixosPN:['92','00'],ocorrenciasIgnorar:[]}};
+let PROJS_VALIDOS=new Set();
 
 const g=id=>document.getElementById(id);
 const nk=s=>String(s).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-
 let hh=[],cron=[],dadosProcessados=[],dadosFiltrados=[],sel=null;
 let sortCol='qtdTotal',sortDir=-1,tabelaData=[];
 let _tt;
 
 function toast(msg){const t=g('toast');t.textContent=msg;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),3200);}
+function projCor(p){const proj=CFG.projetos.find(x=>x.id===p);return proj?proj.cor:'#607D8B';}
+function normPN(pn){if(!pn)return'';const s=String(pn).trim();const suf=s.slice(-2);return(CFG.filtros.sufixosPN.includes(suf)||suf==='91')?s.slice(0,-2):s;}
 
-function projCor(p){const c={'BCM SEAR2':'#FF5722','MTCO 2.0':'#6B4C9A','BVDR 2.1':'#00695C','DCDC':'#E65100','PTM':'#880E4F','CM4':'#1565C0','COOX':'#00838F'};return c[p]||'#607D8B';}
-
-function normPN(pn){if(!pn)return'';const s=String(pn).trim();const suf=s.slice(-2);return(suf==='91'||suf==='92'||suf==='00')?s.slice(0,-2):s;}
-
-/* ✅ nP com COOX */
 function nP(s){
-  if(!s)return null;const u=String(s).toUpperCase().trim();
-  if(/BCM[\s\-_]?SEAR[\s\-_]?2/.test(u))return'BCM SEAR2';
-  if(u.includes('MTCO'))return'MTCO 2.0';
-  if(u.includes('BVDR'))return'BVDR 2.1';
-  if(u.includes('DCDC')||u.includes('CONVERSOR'))return'DCDC';
-  if(u.includes('PTM'))return'PTM';
-  if(u.includes('CM4')||u.includes('VW'))return'CM4';
-  if(u.includes('COOX'))return'COOX';
+  if(!s)return null;
+  const u=String(s).toUpperCase().trim();
+  for(const proj of CFG.projetos){
+    for(const alias of proj.aliases){
+      if(u.includes(alias.toUpperCase()))return proj.id;
+    }
+  }
   return null;
 }
 
-/* ✅ splitProjs SEM fallback — só projetos válidos */
 function splitProjs(raw){
   if(!raw)return[];
   const res=[];
@@ -201,17 +188,17 @@ function extrairMes(d){if(!d)return null;return parseInt(String(d).slice(5,7))||
 function extrairSem(d){if(!d)return null;const dt=new Date(String(d).slice(0,10));if(isNaN(dt))return null;const j=new Date(dt.getFullYear(),0,1);return Math.ceil(((dt-j)/86400000+j.getDay()+1)/7);}
 function extrairDia(d){if(!d)return null;return String(d).slice(0,10);}
 
-/* ── PROCESSAMENTO PRINCIPAL ── */
 function processarDados(){
-  /* índice HH: data+proj+pnBase → cruzamento granular */
-  const hhIdx=new Set();
-  /* índice tryouts HH: data+proj → para contar tryouts */
-  const hhTryouts=new Set();
+  const CUT=CFG.filtros.dataCorte;
 
+  /* índice HH: data+proj+pnBase */
+  const hhIdx=new Set();
+  /* tryouts confirmados pelo HH: data+proj */
+  const hhTryouts=new Set();
   hh.forEach(r=>{
     if(!r.data||r.data<CUT)return;
     const projs=splitProjs(r.proj);
-    if(!projs.length)return; /* ✅ ignora se sem projeto válido */
+    if(!projs.length)return;
     const pnBase=normPN(r.pn||'');
     projs.forEach(p=>{
       hhIdx.add(r.data+'||'+p+'||'+pnBase);
@@ -221,11 +208,11 @@ function processarDados(){
 
   const registros=[];
 
-  /* 1 — registros HH com projeto válido */
+  /* 1 — HH com projeto válido */
   hh.forEach(r=>{
     if(!r.data||r.data<CUT)return;
     const projs=splitProjs(r.proj);
-    if(!projs.length)return; /* ✅ ignora sem projeto válido */
+    if(!projs.length)return;
     projs.forEach(proj=>{
       registros.push({
         data:r.data,proj,
@@ -233,7 +220,8 @@ function processarDados(){
         qty:Number(r.qty)||0,
         horas:getHoras(r),
         fonte:'hh',
-        isTryout:true /* tryout confirmado pelo HH */
+        /* ✅ tarefaKey do HH: data+proj — 1 tryout por dia+projeto no HH */
+        tarefaKey:r.data+'||'+proj
       });
     });
   });
@@ -242,27 +230,26 @@ function processarDados(){
   cron.forEach(tarefa=>{
     if(!tarefa.di||tarefa.di<CUT)return;
     if(!(tarefa.pnQty&&tarefa.pnQty.length))return;
-    /* ✅ só tarefas SMD */
     if(!String(tarefa.nome||'').toUpperCase().includes('SMD'))return;
+    /* ✅ tarefaKey do cron: di + tarefaKey original (garante 1 tryout por linha do cron) */
+    const tarefaKey=tarefa.tarefaKey||tarefa.di+'||cron:'+tarefa.nome;
+    const temHH=hhTryouts.has(tarefa.di+'||-');
     (tarefa.projs||[]).filter(p=>PROJS_VALIDOS.has(p)).forEach(proj=>{
-      const temHH=hhTryouts.has(tarefa.di+'||'+proj);
+      const temHHproj=hhTryouts.has(tarefa.di+'||'+proj);
       tarefa.pnQty.forEach(({pn,qty})=>{
         if(!pn)return;
         const suf=pn.slice(-2);
-        if(suf!=='92'&&suf!=='00')return;
+        if(!CFG.filtros.sufixosPN.includes(suf))return;
         const pnBase=normPN(pn);
-        /* mesmo PN no HH naquele dia+proj → ignora */
         if(hhIdx.has(tarefa.di+'||'+proj+'||'+pnBase))return;
-        /* PN diferente ou sem HH:
-           - sem HH → é tryout novo (+isTryout)
-           - com HH mas PN diferente → mesmo tryout, só qty extra */
         registros.push({
           data:tarefa.di,proj,
-          pn,pnBase,
-          qty:qty||0,
-          horas:0,
+          pn,pnBase,qty:qty||0,horas:0,
           fonte:'cron',
-          isTryout:!temHH /* só conta como tryout se não tem HH nesse dia+proj */
+          /* ✅ mesma tarefaKey para todos os projetos da mesma tarefa */
+          tarefaKey,
+          /* só é tryout novo se não tem HH nesse dia+proj */
+          isTryoutNovo:!temHHproj
         });
       });
     });
@@ -271,7 +258,6 @@ function processarDados(){
   dadosProcessados=registros;
 }
 
-/* ── SELECTS ── */
 function popularSelects(){
   const datas=dadosProcessados.map(r=>r.data).filter(Boolean);
   const anos=[...new Set(datas.map(extrairAno).filter(Boolean))].sort();
@@ -285,7 +271,6 @@ function popularSelects(){
 }
 function popSel(id,itens,lbl){const s=g(id);s.innerHTML='<option value="">'+lbl+'</option>';itens.forEach(i=>{const o=document.createElement('option');o.value=i.v;o.textContent=i.l;s.appendChild(o);});}
 
-/* ── PROJ BTNS ── */
 function rProjBtns(){
   const projs=[...new Set(dadosProcessados.map(r=>r.proj).filter(p=>PROJS_VALIDOS.has(p)))].sort();
   const w=g('projBtns');
@@ -295,7 +280,6 @@ function rProjBtns(){
 }
 function sP(p){sel=sel===p?null:p;rProjBtns();aplicarFiltros();}
 
-/* ── FILTROS ── */
 function aplicarFiltros(){
   const ano=g('selYear').value,mes=g('selMonth').value,sem=g('selWeek').value,dia=g('selDay').value;
   dadosFiltrados=dadosProcessados.filter(r=>{
@@ -310,16 +294,37 @@ function aplicarFiltros(){
 }
 function limparFiltros(){sel=null;['selYear','selMonth','selWeek','selDay'].forEach(id=>g(id).value='');rProjBtns();aplicarFiltros();}
 
-/* ── RENDER ── */
 function renderTudo(){
-  /* KPI 1 — tryouts únicos: conta data+proj onde isTryout=true */
-  const tryoutsUnicos=new Set(
-    dadosFiltrados.filter(r=>r.isTryout).map(r=>r.data+'||'+r.proj)
-  );
+  /* ✅ KPI tryouts — conta tarefaKeys únicas:
+     - HH: 1 por data+proj
+     - Cron sem HH: 1 por tarefaKey (independente de quantos projetos na tarefa) */
+  const tryoutsSet=new Set();
+  /* HH: conta data+proj */
+  dadosFiltrados.filter(r=>r.fonte==='hh').forEach(r=>tryoutsSet.add(r.tarefaKey));
+  /* Cron: conta tarefaKey única só se é tryout novo (sem HH naquele dia+proj) */
+  dadosFiltrados.filter(r=>r.fonte==='cron'&&r.isTryoutNovo).forEach(r=>tryoutsSet.add(r.tarefaKey));
+
   const porProj={};
-  [...tryoutsUnicos].forEach(k=>{const p=k.split('||')[1];porProj[p]=(porProj[p]||0)+1;});
-  g('kT').textContent=tryoutsUnicos.size||'--';
-  g('kTS').textContent=Object.entries(porProj).sort().map(([p,n])=>p+': '+n).join(' \u00B7 ')||'--';
+  dadosFiltrados.filter(r=>r.fonte==='hh').forEach(r=>{
+    const k=r.tarefaKey;
+    if(!porProj[r.proj+'||'+k])porProj[r.proj]=(porProj[r.proj]||0)+1;
+    porProj[r.proj+'||'+k]=true;
+  });
+  /* recontar por projeto corretamente */
+  const pp={};
+  const vistosHH=new Set();
+  dadosFiltrados.filter(r=>r.fonte==='hh').forEach(r=>{
+    const k=r.proj+'||'+r.tarefaKey;
+    if(!vistosHH.has(k)){vistosHH.add(k);pp[r.proj]=(pp[r.proj]||0)+1;}
+  });
+  const vistosCron=new Set();
+  dadosFiltrados.filter(r=>r.fonte==='cron'&&r.isTryoutNovo).forEach(r=>{
+    const k=r.proj+'||'+r.tarefaKey;
+    if(!vistosCron.has(k)){vistosCron.add(k);pp[r.proj]=(pp[r.proj]||0)+1;}
+  });
+
+  g('kT').textContent=tryoutsSet.size||'--';
+  g('kTS').textContent=Object.entries(pp).sort().map(([p,n])=>p+': '+n).join(' \u00B7 ')||'--';
 
   /* KPI 2 — qtd sem duplicidade: 1 por pnBase+data */
   const prodMapa={};
@@ -332,7 +337,7 @@ function renderTudo(){
   const totalProd=Object.values(prodMapa).reduce((s,v)=>s+v,0);
   g('kP').textContent=totalProd>0?totalProd.toLocaleString('pt-BR')+' pcs':'--';
 
-  /* KPI 3 — horas só do HH */
+  /* KPI 3 — horas HH */
   const totalH=Math.round(dadosFiltrados.filter(r=>r.fonte==='hh').reduce((s,r)=>s+r.horas,0)*10)/10;
   g('kH').textContent=totalH>0?totalH+'h':'--';
 
@@ -345,9 +350,9 @@ function buildTabela(){
     if(!r.pnBase)return;
     const key=r.proj+'||'+r.pnBase;
     if(!mapa[key])mapa[key]={pn:r.pnBase,proj:r.proj,tryouts:new Set(),qtdMapa:{},ultimaData:''};
-    /* tryout único por data+proj onde isTryout=true */
-    if(r.isTryout)mapa[key].tryouts.add(r.data+'||'+r.proj);
-    /* qty sem duplicidade por pnBase+data */
+    /* tryout por tarefaKey única */
+    if(r.fonte==='hh')mapa[key].tryouts.add(r.tarefaKey);
+    else if(r.isTryoutNovo)mapa[key].tryouts.add(r.tarefaKey);
     const qk=r.pnBase+'|'+r.data;
     if(!mapa[key].qtdMapa[qk])mapa[key].qtdMapa[qk]=0;
     mapa[key].qtdMapa[qk]+=r.qty;
@@ -389,11 +394,21 @@ function renderTabela(){
 
 function sortBy(col){if(sortCol===col)sortDir*=-1;else{sortCol=col;sortDir=-1;}renderTabela();}
 
+async function carregarConfig(){
+  try{
+    const res=await fetch(GH_RAW+'/config.json?t='+Date.now());
+    if(res.ok)CFG=await res.json();
+  }catch{}
+  PROJS_VALIDOS=new Set(CFG.projetos.map(p=>p.id));
+}
+
 (async function(){
+  await carregarConfig();
   try{
     const res=await fetch(GH_RAW+'/dados.json?t='+Date.now());
     if(!res.ok)throw new Error('HTTP '+res.status);
     const data=await res.json();
+    const CUT=CFG.filtros.dataCorte;
     hh=(data.hh||[]).filter(r=>r.data&&r.data>=CUT);
     cron=(data.cron||[]).filter(r=>r.di&&r.di>=CUT);
     processarDados();
