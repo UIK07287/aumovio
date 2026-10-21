@@ -242,8 +242,6 @@ const GH_USER='UIK07287',GH_REPO='aumovio',GH_BRANCH='main';
 const GH_PAGES='https://uik07287.github.io/aumovio';
 const GH_RAW='https://raw.githubusercontent.com/'+GH_USER+'/'+GH_REPO+'/'+GH_BRANCH;
 const SHARE_LINK=GH_PAGES+'/dashboard.html';
-
-/* ✅ DETECÇÃO POR DOMÍNIO — sem precisar de ?shared=1 */
 const SM=location.hostname.includes('github.io');
 if(SM)document.body.classList.add('shared');
 
@@ -251,6 +249,10 @@ const TODAY=new Date().toISOString().slice(0,10);
 const CUT='2026-01-01';
 const DBN='AumovioV17';
 const SKIP=new Set(['produzindo','producao','refeicao','montagem em linha','producao normal','producao smd','producao em linha','linha produzindo','aguardando','intervalo','']);
+
+/* ✅ LISTA FECHADA DE PROJETOS VÁLIDOS */
+const PROJS_VALIDOS=new Set(['PTM','BCM SEAR2','MTCO 2.0','BVDR 2.1','DCDC','CM4','COOX']);
+
 let db=null,arqs=[],cron=[],hh=[],sel=null;
 let fT='--',fTS='carregue as planilhas',fHv='-- / --',fP='--',fPS='sem duplicidade';
 
@@ -259,8 +261,9 @@ const nk=s=>String(s).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u0
 const tr2=(s,n)=>{s=String(s);return s.length>n?s.slice(0,n)+'\u2026':s;};
 function col(r,...keys){for(const k of keys){const v=r[k];if(v!==undefined&&String(v).trim()!=='')return v;}return'';}
 function findKey(row,...terms){const keys=Object.keys(row);for(const term of terms){const t=nk(term);const ex=keys.find(k=>nk(k)===t);if(ex)return ex;const pt=keys.find(k=>nk(k).includes(t));if(pt)return pt;}return null;}
-function projCor(p){const c={'BCM SEAR2':'#FF5722','MTCO 2.0':'#6B4C9A','BVDR 2.1':'#00695C','DCDC':'#E65100','PTM':'#880E4F','CM4':'#1565C0','SCANIA':'#1B5E20'};return c[p]||'#607D8B';}
+function projCor(p){const c={'BCM SEAR2':'#FF5722','MTCO 2.0':'#6B4C9A','BVDR 2.1':'#00695C','DCDC':'#E65100','PTM':'#880E4F','CM4':'#1565C0','SCANIA':'#1B5E20','COOX':'#00838F'};return c[p]||'#607D8B';}
 
+/* ✅ nP atualizada com COOX — sem fallback */
 function nP(s){
   if(!s)return null;const u=String(s).toUpperCase().trim();
   if(/BCM[\s\-_]?SEAR[\s\-_]?2/.test(u))return'BCM SEAR2';
@@ -270,21 +273,22 @@ function nP(s){
   if(u.includes('PTM'))return'PTM';
   if(u.includes('CM4')||u.includes('VW')||u.includes('VOLKSWAGEN'))return'CM4';
   if(u.includes('SCANIA'))return'SCANIA';
+  if(u.includes('COOX'))return'COOX';
   return null;
 }
 
-/* ✅ SPLIT PROJETOS COMBINADOS ex: "MTCO 2.0 / BVDR 2.1" */
+/* ✅ splitProjs SEM fallback — só projetos reconhecidos */
 function splitProjs(raw){
   if(!raw)return[];
   const res=[];
   for(const part of String(raw).split(/[\/,;|]/)){
-    const p=nP(part.trim());if(p&&!res.includes(p))res.push(p);
+    const p=nP(part.trim());
+    if(p&&PROJS_VALIDOS.has(p)&&!res.includes(p))res.push(p);
   }
   return res;
 }
 
 function normPN(pn){if(!pn)return'';const s=String(pn).trim();const suf=s.slice(-2);return(suf==='91'||suf==='92'||suf==='00')?s.slice(0,-2):s;}
-
 function toISO(v){if(!v&&v!==0)return null;if(v instanceof Date){return isNaN(v)?null:v.toISOString().slice(0,10);}if(typeof v==='number'){if(v<1)return null;return new Date(Math.round((v-25569)*86400000)).toISOString().slice(0,10);}const s=String(v).trim();if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(0,10);if(/^\d{2}\/\d{2}\/\d{4}$/.test(s)){const p=s.split('/');return p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');}if(/^\d{2}\.\d{2}\.\d{4}$/.test(s)){const p=s.split('.');return p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');}return null;}
 function pM(v){if(v instanceof Date)return v.getHours()*60+v.getMinutes();if(typeof v==='number'){if(v>=0&&v<1)return Math.round(v*1440);return 0;}const m=String(v||'').match(/(\d{1,2}):(\d{2})/);return m?+m[1]*60+ +m[2]:0;}
 function fM(m){const h=Math.floor(m/60),n=m%60;return h?(h+'h'+(n?String(n).padStart(2,'0')+'min':'')):(n+'min');}
@@ -310,6 +314,7 @@ function parseCron(wb){
     const rn={};for(const k of Object.keys(row))rn[nk(k)]=row[k];
     const nomeKey=findKey(row,'nome da tarefa','nome da atividade','nome','task name','titulo','atividade','tarefa','summary','name');
     const nome=String(nomeKey?row[nomeKey]:(col(rn,'nome da tarefa','nome da atividade','nome')||'')).trim();
+    /* ✅ só tarefas com SMD no título */
     if(!nome.toUpperCase().includes('SMD'))continue;
     const dataKey=findKey(row,'data de inicio','data de início','data inicio','start date','data','inicio','start');
     const di=toISO(dataKey?row[dataKey]:col(rn,'data de inicio','data de início','data inicio','start date','data','inicio','start'));
@@ -320,11 +325,13 @@ function parseCron(wb){
     const realizado=snk.includes('conclu')||snk.includes('done')||snk.includes('finaliz')||snk.includes('complet');
     const rotKey=findKey(row,'rotulos','rótulos','labels','etiquetas','tags','categorias','tipo');
     const rs=String(rotKey?row[rotKey]:(col(rn,'rotulos','rótulos','labels','etiquetas','tags')||''));
-    /* ✅ split projetos combinados */
+    /* ✅ só projetos da lista fechada */
     const projs=splitProjs(rs);
-    if(!projs.length){const p=nP(nome);if(p)projs.push(p);}
-    if(!projs.length){for(const token of nome.split(/[\s\-_\/\\|,;]+/)){const p=nP(token);if(p&&!projs.includes(p)){projs.push(p);break;}}}
-    if(!projs.length){for(const v of Object.values(rn)){const vs=String(v||'').trim();if(!vs||vs.length>80)continue;const p=nP(vs);if(p&&!projs.includes(p))projs.push(p);}}
+    if(!projs.length){const p=nP(nome);if(p&&PROJS_VALIDOS.has(p))projs.push(p);}
+    if(!projs.length){for(const token of nome.split(/[\s\-_\/\\|,;]+/)){const p=nP(token);if(p&&PROJS_VALIDOS.has(p)&&!projs.includes(p)){projs.push(p);break;}}}
+    if(!projs.length){for(const v of Object.values(rn)){const vs=String(v||'').trim();if(!vs||vs.length>80)continue;const p=nP(vs);if(p&&PROJS_VALIDOS.has(p)&&!projs.includes(p))projs.push(p);}}
+    /* ✅ se não tem projeto válido → ignora */
+    if(!projs.length)continue;
     const clKey=findKey(row,'itens da lista de verificacao','itens da lista de verificação','checklist','itens');
     const clRaw=String(clKey?row[clKey]:(col(rn,'itens da lista de verificacao','itens da lista de verificação','checklist','itens')||''));
     const checks={};let hpR=null,hrR=null;
@@ -357,10 +364,11 @@ function parseHH(wb){
     const com=String(rn['comentario']||rn['coment\u00E1rio']||'').trim();
     const iniRaw=rnR['inicio']||rnR['Inicio']||rn['inicio']||'';
     const fimRaw=rnR['fim']||rnR['Fim']||rn['fim']||'';
-    /* ✅ split projetos combinados no HH */
+    /* ✅ split projetos — só válidos, sem fallback */
     let projs=splitProjs(projRaw);
-    if(!projs.length){const p=nP(pnStr);if(p)projs.push(p);}
-    if(!projs.length)projs.push(projRaw||'?');
+    if(!projs.length){const p=nP(pnStr);if(p&&PROJS_VALIDOS.has(p))projs.push(p);}
+    /* ✅ sem projeto válido → ignora registro */
+    if(!projs.length)return;
     for(const proj of projs){
       result.push({pn:pnStr,proj,data,qty,occ:occ||com,ini:iniRaw,fim:fimRaw});
     }
@@ -413,21 +421,20 @@ function calcKPI(){
   rFr();
 }
 
-/* ✅ NOVA LÓGICA calcPecas — chave data+proj+pnBase */
+/* ✅ calcPecas — cruzamento por data+proj+pnBase */
 function calcPecas(cr,hr){
   const pm={};
-  /* índice HH: data+proj+pnBase → para cruzamento */
+  /* índice HH: data+proj+pnBase */
   const hhIdx=new Set();
   for(const r of hr){
     if(!r.pn)continue;
     const pnBase=normPN(r.pn);
     hhIdx.add(r.data+'||'+r.proj+'||'+pnBase);
-    /* soma qtd HH */
     const k=pnBase+'|'+r.data;
     if(!pm[k])pm[k]={q:0};
     pm[k].q+=Number(r.qty)||0;
   }
-  /* notas do cron — aceita 92 e 00 */
+  /* notas do cron — aceita PN 92 e 00 */
   for(const r of cr){
     for(const proj of r.projs){
       for(const{pn,qty}of r.pnQty||[]){
@@ -435,9 +442,9 @@ function calcPecas(cr,hr){
         const suf=pn.slice(-2);
         if(suf!=='92'&&suf!=='00')continue;
         const pnBase=normPN(pn);
-        /* ✅ mesmo PN no HH naquele dia+proj → ignora */
+        /* mesmo PN no HH naquele dia+proj → ignora */
         if(hhIdx.has(r.di+'||'+proj+'||'+pnBase))continue;
-        /* PN diferente ou sem HH → acrescenta */
+        /* PN diferente ou sem HH → acrescenta qty */
         const k=pnBase+'|'+r.di;
         if(!pm[k])pm[k]={q:0};
         pm[k].q+=qty||0;
@@ -448,7 +455,7 @@ function calcPecas(cr,hr){
 }
 
 function rFr(){g('kT').textContent=fT;g('kTS').textContent=fTS;g('kH').textContent=fHv;g('kP').textContent=fP;g('kPS').textContent=fPS;}
-function buildProjs(){const ps=new Set();for(const r of cron){if(r.di>=CUT)for(const p of r.projs)ps.add(p);}for(const r of hh){if(r.data>=CUT&&r.proj)ps.add(r.proj);}return[...ps].sort();}
+function buildProjs(){const ps=new Set();for(const r of cron){if(r.di>=CUT)for(const p of r.projs)if(PROJS_VALIDOS.has(p))ps.add(p);}for(const r of hh){if(r.data>=CUT&&r.proj&&PROJS_VALIDOS.has(r.proj))ps.add(r.proj);}return[...ps].sort();}
 function rBt(){const w=g('projBtns'),projs=buildProjs();if(!projs.length){w.innerHTML='<span style="color:#95A5A6;font-size:10px">Nenhum projeto detectado</span>';return;}w.innerHTML=projs.map(p=>'<button class="proj-btn'+(sel===p?' active':'')+'" onclick="sP(\''+p+'\')">'+p+'</button>').join('');}
 function sP(p){sel=sel===p?null:p;rBt();rScr();}
 function gC(p){return p?cron.filter(r=>r.projs.includes(p)):[...cron];}
