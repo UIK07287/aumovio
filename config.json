@@ -1,0 +1,16 @@
+{
+  "projetos": [
+    {"id": "BCM SEAR2",  "aliases": ["BCM SEAR2","BCM SEAR 2","BCMSEAR2"],         "cor": "#FF5722"},
+    {"id": "MTCO 2.0",   "aliases": ["MTCO"],                                       "cor": "#6B4C9A"},
+    {"id": "BVDR 2.1",   "aliases": ["BVDR"],                                       "cor": "#00695C"},
+    {"id": "DCDC",       "aliases": ["DCDC","CONVERSOR"],                            "cor": "#E65100"},
+    {"id": "PTM",        "aliases": ["PTM"],                                         "cor": "#880E4F"},
+    {"id": "CM4",        "aliases": ["CM4","VW","VOLKSWAGEN"],                       "cor": "#1565C0"},
+    {"id": "COOX",       "aliases": ["COOX"],                                        "cor": "#00838F"}
+  ],
+  "filtros": {
+    "dataCorte": "2026-01-01",
+    "sufixosPN": ["92","00"],
+    "ocorrenciasIgnorar": ["produzindo","producao","refeicao","montagem em linha","producao normal","producao smd","producao em linha","linha produzindo","aguardando","intervalo"]
+  }
+}
