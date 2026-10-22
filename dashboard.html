@@ -141,9 +141,7 @@ body.shared .upload-overlay{display:none!important}
       <input class="gh-inp" id="ghToken" type="password" placeholder="Token GitHub (ghp_...)">
       <button class="gh-eye" id="ghEye">&#128065;</button>
     </div>
-    <button class="pub-btn" id="pubBtn">
-      <span id="pubBtnTxt">&#8679; Publicar e Copiar Link</span>
-    </button>
+    <button class="pub-btn" id="pubBtn"><span id="pubBtnTxt">&#8679; Publicar e Copiar Link</span></button>
     <div class="gh-status" id="ghStatus">
       <div class="gh-status-title" id="ghStatusTitle"></div>
       <div class="gh-status-detail" id="ghStatusDetail"></div>
@@ -243,7 +241,7 @@ const SHARE_LINK=GH_PAGES+'/dashboard.html';
 const SM=location.hostname.includes('github.io');
 if(SM)document.body.classList.add('shared');
 const TODAY=new Date().toISOString().slice(0,10);
-const DBN='AumovioV17';
+const DBN='AumovioV18';
 let db=null,arqs=[],cron=[],hh=[],sel=null;
 let fT='--',fTS='carregue as planilhas',fHv='-- / --',fP='--',fPS='sem duplicidade';
 let CFG={projetos:[],filtros:{dataCorte:'2026-01-01',sufixosPN:['92','00'],ocorrenciasIgnorar:[]}};
@@ -279,14 +277,59 @@ function splitProjs(raw){
   return res;
 }
 
-function normPN(pn){if(!pn)return'';const s=String(pn).trim();const suf=s.slice(-2);return(CFG.filtros.sufixosPN.includes(suf)||suf==='91')?s.slice(0,-2):s;}
+function normPN(pn){
+  if(!pn)return'';
+  const s=String(pn).trim();
+  const suf=s.slice(-2);
+  return(CFG.filtros.sufixosPN.includes(suf)||suf==='91')?s.slice(0,-2):s;
+}
+
+/* ✅ PARSER NOTAS — lê linha a linha: PN - PROJETO - QTY */
+function extrairPNQtyNotas(notas){
+  if(!notas)return[];
+  const txt=String(notas);
+  const res=[];
+  const vistos=new Set();
+  const linhas=txt.split(/\n|\r|;/);
+  for(const linha of linhas){
+    /* formato: PN - PROJETO - N peças */
+    const m=linha.match(/([A-Z0-9]{6,})\s*-\s*([^-]+?)\s*-\s*(\d+)\s*pe[cç]/i);
+    if(m){
+      const pn=m[1].trim();
+      const projRaw=m[2].trim();
+      const qty=parseInt(m[3],10);
+      const proj=nP(projRaw);
+      if(!proj||!PROJS_VALIDOS.has(proj))continue;
+      const key=pn+'||'+proj;
+      if(!vistos.has(key)){vistos.add(key);res.push({pn,proj,qty});}
+      continue;
+    }
+    /* fallback: só PN e qty sem projeto */
+    const m2=linha.match(/([A-Z0-9]{6,})\s*[-–]\s*(\d+)\s*pe[cç]/i);
+    if(m2){
+      const pn=m2[1].trim();
+      const qty=parseInt(m2[2],10);
+      if(!vistos.has(pn+'||?')){vistos.add(pn+'||?');res.push({pn,proj:null,qty});}
+    }
+  }
+  /* se não achou nada no formato novo, tenta regex antigo */
+  if(!res.length){
+    const rePN=/([A-Z0-9]{3}[0-9]{6,}[0-9A-Z]{0,4})\s*(?:-[^-\d]*?)?(\d+)\s*pe[cç]/gi;
+    let m;
+    while((m=rePN.exec(txt))!==null){
+      const pn=m[1].trim(),qty=parseInt(m[2],10);
+      if(!vistos.has(pn+'||?')){vistos.add(pn+'||?');res.push({pn,proj:null,qty});}
+    }
+  }
+  return res;
+}
+
 function toISO(v){if(!v&&v!==0)return null;if(v instanceof Date){return isNaN(v)?null:v.toISOString().slice(0,10);}if(typeof v==='number'){if(v<1)return null;return new Date(Math.round((v-25569)*86400000)).toISOString().slice(0,10);}const s=String(v).trim();if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(0,10);if(/^\d{2}\/\d{2}\/\d{4}$/.test(s)){const p=s.split('/');return p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');}if(/^\d{2}\.\d{2}\.\d{4}$/.test(s)){const p=s.split('.');return p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');}return null;}
 function pM(v){if(v instanceof Date)return v.getHours()*60+v.getMinutes();if(typeof v==='number'){if(v>=0&&v<1)return Math.round(v*1440);return 0;}const m=String(v||'').match(/(\d{1,2}):(\d{2})/);return m?+m[1]*60+ +m[2]:0;}
 function fM(m){const h=Math.floor(m/60),n=m%60;return h?(h+'h'+(n?String(n).padStart(2,'0')+'min':'')):(n+'min');}
 function fH2(h){if(h==null||isNaN(h)||h===0)return'--';const hv=Math.floor(h),mm=Math.round((h-hv)*60);return mm?hv+'h'+String(mm).padStart(2,'0'):hv+'h';}
 function fmtData(iso){if(!iso)return'--';const[y,m,d]=iso.split('-');return d+'/'+m+'/'+y.slice(2);}
 function pH(v,notas){const t=s=>{if(!s&&s!==0)return null;const x=String(s).trim();const m1=x.match(/(\d+)[hH:](\d{0,2})/);if(m1)return+m1[1]+(+m1[2]||0)/60;const m2=x.match(/(\d+(?:[.,]\d+)?)/);if(m2)return parseFloat(m2[1].replace(',','.'));return null;};let r=t(v);if(r!=null)return r;if(notas){for(const p of[/[Hh]oras?\s*[Rr]ealizadas?\s*[=:]\s*([\d,. hH:]+)/,/[Dd]ura[cç][aã]o\s*[=:]\s*([\dhH:., ]+)/,/[Hh]oras?\s*[Pp]lanejadas?\s*[=:]\s*([\d,. hH:]+)/]){const m=String(notas).match(p);if(m){r=t(m[1]);if(r!=null)return r;}}}return null;}
-function extrairPNQty(notas){if(!notas)return[];const txt=String(notas),res=[],vistos=new Set();const rePN=/([A-Z0-9]{3}[0-9]{6,}[0-9A-Z]{0,4})\s*(?:-[^-\d]*?)?(\d+)\s*pe[cç]/gi;let m;while((m=rePN.exec(txt))!==null){const pn=m[1].trim(),qty=parseInt(m[2],10);if(!vistos.has(pn)){vistos.add(pn);res.push({pn,qty});}}if(!res.length){const rePNsolo=/([A-Z0-9]{3}[0-9]{6,}[0-9A-Z]{0,4})/g;const pns=[];let mp;while((mp=rePNsolo.exec(txt))!==null)pns.push(mp[1].trim());const mQ=txt.match(/[Qq]uantidade[s]?\s*[=:]\s*(\d+)/);if(pns.length===1&&mQ)res.push({pn:pns[0],qty:parseInt(mQ[1],10)});else for(const pn of[...new Set(pns)])res.push({pn,qty:0});}return res;}
 
 function abrirDB(){return new Promise((r,j)=>{const q=indexedDB.open(DBN,1);q.onupgradeneeded=v=>v.target.result.createObjectStore('a',{keyPath:'id',autoIncrement:true});q.onsuccess=v=>{db=v.target.result;r();};q.onerror=j;});}
 const dba=(n,t,d,ed)=>new Promise(r=>{const tx=db.transaction('a','readwrite');tx.objectStore('a').add({nome:n,tipo:t,dados:d,exportDate:ed||''});tx.oncomplete=r;});
@@ -294,13 +337,37 @@ const dbc=()=>new Promise(r=>{const tx=db.transaction('a','readwrite');tx.object
 const dball=()=>new Promise(r=>{const q=db.transaction('a','readonly').objectStore('a').getAll();q.onsuccess=v=>r(v.target.result);q.onerror=()=>r([]);});
 
 function dTipo(wb,nome){const nl=nk(nome);if((nl.startsWith('try-out')||nl.startsWith('tryout'))&&!nl.includes('cronograma'))return'h';if(nl.includes('cronograma')||nl.includes('cron'))return'c';if(wb.SheetNames.some(n=>nk(n).includes('dado')||nk(n).includes('cron')||nk(n).includes('plano')))return'c';try{const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:'',header:1});if(rows.length){const h=rows[0].map(c=>nk(String(c||'')));if(h.some(x=>x.includes('nome')&&x.includes('tarefa')))return'c';}}catch{}return'h';}
-function cronExportDate(wb){for(const sn of wb.SheetNames){const m=sn.match(/(\d{4}-\d{2}-\d{2})/);if(m)return m[1];}return TODAY;}
 
-function parseCron(wb){
+/* ✅ exportDate: pega a data mais recente do nome do arquivo ou das abas */
+function cronExportDate(wb,nomeArq){
+  /* tenta no nome do arquivo primeiro */
+  const mNome=(nomeArq||'').match(/(\d{2}[-\/]\d{2}[-\/]\d{4}|\d{4}[-\/]\d{2}[-\/]\d{2})/);
+  if(mNome){
+    const iso=toISO(mNome[1]);if(iso)return iso;
+  }
+  /* tenta nas abas */
+  for(const sn of wb.SheetNames){
+    const m=sn.match(/(\d{4}-\d{2}-\d{2})/);if(m)return m[1];
+    const m2=sn.match(/(\d{2}\/\d{2}\/\d{4})/);if(m2){const iso=toISO(m2[1]);if(iso)return iso;}
+  }
+  return TODAY;
+}
+
+function parseCron(wb,nomeArq){
   const CUT=CFG.filtros.dataCorte;
   let sn=wb.SheetNames[0],maxL=0;
-  for(const n of wb.SheetNames){try{const r=XLSX.utils.sheet_to_json(wb.Sheets[n],{defval:''});if(r.length>maxL){const temNome=r.length&&Object.keys(r[0]).some(k=>nk(k).includes('nome'));if(temNome){maxL=r.length;sn=n;}else if(r.length>maxL*2){maxL=r.length;sn=n;}}}catch{}}
+  for(const n of wb.SheetNames){
+    try{
+      const r=XLSX.utils.sheet_to_json(wb.Sheets[n],{defval:''});
+      if(r.length>maxL){
+        const temNome=r.length&&Object.keys(r[0]).some(k=>nk(k).includes('nome'));
+        if(temNome){maxL=r.length;sn=n;}
+        else if(r.length>maxL*2){maxL=r.length;sn=n;}
+      }
+    }catch{}
+  }
   const rows=XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:''});
+  const exportDate=cronExportDate(wb,nomeArq);
   const res=[];
   rows.forEach((row,idx)=>{
     const rn={};for(const k of Object.keys(row))rn[nk(k)]=row[k];
@@ -329,10 +396,22 @@ function parseCron(wb){
     const notas=String(notasKey?row[notasKey]:(col(rn,'notas','notes','observacoes','observações')||''));
     if(!hpR){const m=notas.match(/[Hh]oras?\s*[Pp]lanejadas?\s*[=:]\s*([\dh:., ]+)/);if(m)hpR=m[1];}
     if(!hrR){const m=notas.match(/[Hh]oras?\s*[Rr]ealizadas?\s*[=:]\s*([\dhH:., ]+)/)||notas.match(/[Dd]ura[cç][aã]o\s*[=:]\s*([\dhH:., ]+)/);if(m)hrR=m[1];}
-    const pnQty=extrairPNQty(notas);
-    /* ✅ tarefaKey: identifica 1 tryout único — di + índice da linha */
+    /* ✅ parser novo — lê PN+proj+qty das notas linha a linha */
+    const pnQty=extrairPNQtyNotas(notas);
+    /* ✅ tarefaKey única por linha do cron — independente de qtd de projetos */
     const tarefaKey=di+'||idx:'+idx;
-    res.push({nome,di,projs,status,realizado,hPlan:pH(hpR),hReal:pH(hrR,notas),checks,pnQty,tarefaKey});
+    /* ✅ horas divididas pelo nº de projetos */
+    const nProjs=projs.length||1;
+    const hPlanDiv=pH(hpR)!=null?pH(hpR)/nProjs:null;
+    const hRealDiv=pH(hrR,notas)!=null?pH(hrR,notas)/nProjs:null;
+    /* ✅ gera 1 entrada por projeto — linhas separadas na tabela */
+    for(const proj of projs){
+      res.push({
+        nome,di,proj,projs,status,realizado,
+        hPlan:hPlanDiv,hReal:hRealDiv,
+        checks,pnQty,tarefaKey,exportDate
+      });
+    }
   });
   return res.sort((a,b)=>a.di.localeCompare(b.di));
 }
@@ -385,41 +464,86 @@ function fecharUpload(){g('uploadOverlay').classList.remove('show');}
   g('fi').addEventListener('change',function(){if(!SM)hF([...this.files]);this.value='';});
 })();
 
-async function hF(files){const xl=files.filter(f=>f.name.toLowerCase().endsWith('.xlsx'));if(!xl.length){toast('Selecione arquivos .xlsx');return;}for(const f of xl){await new Promise(res=>{const r=new FileReader();r.onload=async ev=>{try{const wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array'});const t=dTipo(wb,f.name),ed=t==='c'?cronExportDate(wb):'';const d=t==='c'?parseCron(wb):parseHH(wb);if(!d.length){toast(tr2(f.name,22)+': sem dados reconhecidos');res();return;}await dba(f.name,t,d,ed);arqs.push({nome:f.name,tipo:t,dados:d,exportDate:ed});rFL();toast(tr2(f.name,22)+' \u2014 '+d.length+' registros');}catch(e){console.error(e);toast('Erro: '+tr2(f.name,22));}res();};r.readAsArrayBuffer(f);});}}
+async function hF(files){
+  const xl=files.filter(f=>f.name.toLowerCase().endsWith('.xlsx'));
+  if(!xl.length){toast('Selecione arquivos .xlsx');return;}
+  for(const f of xl){
+    await new Promise(res=>{
+      const r=new FileReader();
+      r.onload=async ev=>{
+        try{
+          const wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array'});
+          const t=dTipo(wb,f.name);
+          const ed=t==='c'?cronExportDate(wb,f.name):'';
+          const d=t==='c'?parseCron(wb,f.name):parseHH(wb);
+          if(!d.length){toast(tr2(f.name,22)+': sem dados reconhecidos');res();return;}
+          await dba(f.name,t,d,ed);
+          arqs.push({nome:f.name,tipo:t,dados:d,exportDate:ed});
+          rFL();
+          toast(tr2(f.name,22)+' \u2014 '+d.length+' registros');
+        }catch(e){console.error(e);toast('Erro: '+tr2(f.name,22));}
+        res();
+      };
+      r.readAsArrayBuffer(f);
+    });
+  }
+}
+
 function rFL(){const l=g('fileList'),b=g('btnAp');if(!arqs.length){l.innerHTML='<div class="empty" style="padding:8px">Nenhum arquivo carregado</div>';b.disabled=true;return;}b.disabled=false;l.innerHTML=arqs.map((a,i)=>'<div class="file-item"><span class="f-name">'+tr2(a.nome,26)+'</span><span class="f-type '+(a.tipo==='c'?'tc':'th')+'">'+(a.tipo==='c'?'Cron':'HxH')+'</span>'+(a.exportDate?'<span class="f-ed">'+a.exportDate+'</span>':'')+'<span style="font-size:8.5px;color:#95A5A6">'+a.dados.length+'</span><button class="f-del" onclick="remA('+i+')">&#215;</button></div>').join('');}
 function remA(i){arqs.splice(i,1);rFL();}
 async function limpar(){if(!confirm('Apagar todos os dados?'))return;await dbc();arqs=[];cron=[];hh=[];sel=null;fT='--';fTS='carregue as planilhas';fHv='-- / --';fP='--';fPS='sem duplicidade';rFL();rFr();rBt();rScr();toast('Banco limpo');}
-function aplicar(){if(SM||!arqs.length)return;const cronArqs=arqs.filter(a=>a.tipo==='c');if(cronArqs.length){cronArqs.sort((a,b)=>(b.exportDate||'').localeCompare(a.exportDate||''));cron=cronArqs[0].dados;}else cron=[];hh=arqs.filter(a=>a.tipo==='h').flatMap(a=>a.dados);fecharUpload();calcKPI();rBt();rScr();toast('\u2705 '+cron.length+' SMDs \u00B7 '+hh.length+' reg HH');}
+
+function aplicar(){
+  if(SM||!arqs.length)return;
+  const cronArqs=arqs.filter(a=>a.tipo==='c');
+  if(cronArqs.length){
+    /* ✅ sempre usa o cron com exportDate mais recente */
+    cronArqs.sort((a,b)=>(b.exportDate||'').localeCompare(a.exportDate||''));
+    cron=cronArqs[0].dados;
+    toast('Cron: '+cronArqs[0].nome+' ('+cronArqs[0].exportDate+')');
+  }else cron=[];
+  hh=arqs.filter(a=>a.tipo==='h').flatMap(a=>a.dados);
+  fecharUpload();calcKPI();rBt();rScr();
+  toast('\u2705 '+cron.length+' SMDs \u00B7 '+hh.length+' reg HH');
+}
 
 function calcKPI(){
-  /* ✅ conta tryouts únicos pela tarefaKey — 1 por linha do cron independente de quantos projetos */
+  /* ✅ tryouts únicos pela tarefaKey — 1 por linha do cron */
   const realizados=cron.filter(r=>r.realizado||r.di<=TODAY);
-  const tryoutsUnicos=new Set(realizados.map(r=>r.tarefaKey||r.di+'||'+r.nome));
+  const tryoutsUnicos=new Set(realizados.map(r=>r.tarefaKey));
   const ay={};
-  realizados.forEach(r=>{const y=r.di.slice(0,4);ay[y]=(ay[y]||0)+1;});
-  /* evita contar a mesma tarefa dupla por ter 2 projetos */
   const contados=new Set();
-  const realizadosFiltrados=realizados.filter(r=>{
-    const k=r.tarefaKey||r.di+'||'+r.nome;
-    if(contados.has(k))return false;
-    contados.add(k);return true;
+  realizados.forEach(r=>{
+    if(!contados.has(r.tarefaKey)){
+      contados.add(r.tarefaKey);
+      const y=r.di.slice(0,4);ay[y]=(ay[y]||0)+1;
+    }
   });
   fT=String(tryoutsUnicos.size||'--');
-  const ay2={};realizadosFiltrados.forEach(r=>{const y=r.di.slice(0,4);ay2[y]=(ay2[y]||0)+1;});
-  fTS=Object.entries(ay2).sort().map(([y,n])=>y+': '+n).join(' \u00B7 ')||'sem realizados';
+  fTS=Object.entries(ay).sort().map(([y,n])=>y+': '+n).join(' \u00B7 ')||'sem realizados';
   let hp=0,hr=0;
+  /* horas: soma sem duplicar pela tarefaKey */
+  const hContados=new Set();
   for(const r of cron){
-    hp+=r.hPlan||0;
-    if(r.hReal!=null)hr+=r.hReal;
-    else if(r.realizado||r.di<=TODAY){const mhh=hh.filter(h=>h.data===r.di&&r.projs.some(p=>h.proj===p));hr+=mhh.reduce((s,h)=>{let d=pM(h.fim)-pM(h.ini);if(d<0)d+=1440;return s+d;},0)/60;}
+    if(!hContados.has(r.tarefaKey)){
+      hContados.add(r.tarefaKey);
+      /* hPlan/hReal já divididos por nProjs no parse */
+      hp+=(r.hPlan||0)*( r.projs?r.projs.length:1);
+      if(r.hReal!=null)hr+=(r.hReal*(r.projs?r.projs.length:1));
+    }
+    if((r.realizado||r.di<=TODAY)&&r.hReal==null){
+      const mhh=hh.filter(h=>h.data===r.di&&h.proj===r.proj);
+      hr+=mhh.reduce((s,h)=>{let d=pM(h.fim)-pM(h.ini);if(d<0)d+=1440;return s+d;},0)/60;
+    }
   }
   fHv=fH2(hp)+' / '+fH2(hr);
   const pm=calcPecas(cron,hh);
-  const tot=Object.values(pm).reduce((s,v)=>s+v.q,0);
+  const tot=Object.values(pm).reduce((s,v)=>s+v,0);
   fP=tot?tot.toLocaleString('pt-BR')+' pcs':'--';
   fPS='sem duplicidade';rFr();
 }
 
+/* ✅ calcPecas — usa proj das notas diretamente, sem loop por r.projs */
 function calcPecas(cr,hr){
   const pm={};
   const hhIdx=new Set();
@@ -427,77 +551,79 @@ function calcPecas(cr,hr){
     if(!r.pn)continue;
     const pnBase=normPN(r.pn);
     hhIdx.add(r.data+'||'+r.proj+'||'+pnBase);
-    const k=pnBase+'|'+r.data;
-    if(!pm[k])pm[k]={q:0};
-    pm[k].q+=Number(r.qty)||0;
+    const k=pnBase+'|'+r.data+'|'+r.proj;
+    if(!pm[k])pm[k]=0;
+    pm[k]+=Number(r.qty)||0;
   }
+  /* notas: cada pnQty já tem proj definido — sem loop por r.projs */
+  const cronVistos=new Set();
   for(const r of cr){
-    for(const proj of r.projs){
-      for(const{pn,qty}of r.pnQty||[]){
-        if(!pn)continue;
-        const suf=pn.slice(-2);
-        if(!CFG.filtros.sufixosPN.includes(suf))continue;
-        const pnBase=normPN(pn);
-        if(hhIdx.has(r.di+'||'+proj+'||'+pnBase))continue;
-        const k=pnBase+'|'+r.di;
-        if(!pm[k])pm[k]={q:0};
-        pm[k].q+=qty||0;
-      }
+    for(const{pn,proj,qty}of r.pnQty||[]){
+      if(!pn)continue;
+      const suf=pn.slice(-2);
+      if(!CFG.filtros.sufixosPN.includes(suf))continue;
+      /* usa proj das notas se disponível, senão usa proj da tarefa */
+      const projFinal=proj&&PROJS_VALIDOS.has(proj)?proj:r.proj;
+      if(!projFinal)continue;
+      const pnBase=normPN(pn);
+      /* ✅ ignora se mesmo PN+proj já está no HH naquele dia */
+      if(hhIdx.has(r.di+'||'+projFinal+'||'+pnBase))continue;
+      /* ✅ evita duplicar mesma nota para múltiplas entradas da mesma tarefa */
+      const cronKey=r.tarefaKey+'||'+pnBase+'||'+projFinal;
+      if(cronVistos.has(cronKey))continue;
+      cronVistos.add(cronKey);
+      const k=pnBase+'|'+r.di+'|'+projFinal;
+      if(!pm[k])pm[k]=0;
+      pm[k]+=qty||0;
     }
   }
   return pm;
 }
 
 function rFr(){g('kT').textContent=fT;g('kTS').textContent=fTS;g('kH').textContent=fHv;g('kP').textContent=fP;g('kPS').textContent=fPS;}
-function buildProjs(){const ps=new Set();for(const r of cron){if(r.di>=CFG.filtros.dataCorte)for(const p of r.projs)if(PROJS_VALIDOS.has(p))ps.add(p);}for(const r of hh){if(r.data>=CFG.filtros.dataCorte&&r.proj&&PROJS_VALIDOS.has(r.proj))ps.add(r.proj);}return[...ps].sort();}
+
+function buildProjs(){
+  const ps=new Set();
+  for(const r of cron){if(r.di>=CFG.filtros.dataCorte&&PROJS_VALIDOS.has(r.proj))ps.add(r.proj);}
+  for(const r of hh){if(r.data>=CFG.filtros.dataCorte&&r.proj&&PROJS_VALIDOS.has(r.proj))ps.add(r.proj);}
+  return[...ps].sort();
+}
 function rBt(){const w=g('projBtns'),projs=buildProjs();if(!projs.length){w.innerHTML='<span style="color:#95A5A6;font-size:10px">Nenhum projeto detectado</span>';return;}w.innerHTML=projs.map(p=>'<button class="proj-btn'+(sel===p?' active':'')+'" onclick="sP(\''+p+'\')">'+p+'</button>').join('');}
 function sP(p){sel=sel===p?null:p;rBt();rScr();}
-function gC(p){return p?cron.filter(r=>r.projs.includes(p)):[...cron];}
+function gC(p){return p?cron.filter(r=>r.proj===p):[...cron];}
 function gH(p){return p?hh.filter(r=>r.proj===p):[...hh];}
 
 function rScr(){
   const cr=gC(sel),hr=gH(sel);
   g('tblTitle').textContent='\u23F1\uFE0F '+(sel?'Horas \u00D7 TryOut \u00B7 '+sel:'Horas Planejadas \u00D7 Realizadas \u2014 Todos');
-  /* ✅ conta tryouts únicos pela tarefaKey no filtro de projeto */
-  const chave=new Set();
-  const realizados=cr.filter(r=>{
-    const k=r.tarefaKey||r.di+'||'+r.nome;
-    const real=r.realizado||r.di<=TODAY;
-    if(real&&!chave.has(k)){chave.add(k);return true;}
-    return real&&chave.has(k)?false:!real;
-  });
-  const futuros=cr.filter(r=>!r.realizado&&r.di>TODAY);
-  const uniqueReal=new Set(cr.filter(r=>r.realizado||r.di<=TODAY).map(r=>r.tarefaKey||r.di+'||'+r.nome));
-  g('tblBadge').textContent=uniqueReal.size+' realizados'+(futuros.length?' \u00B7 '+futuros.length+' futuros':'');
+  const uniqueReal=new Set(cr.filter(r=>r.realizado||r.di<=TODAY).map(r=>r.tarefaKey));
+  const futuros=new Set(cr.filter(r=>!r.realizado&&r.di>TODAY).map(r=>r.tarefaKey));
+  g('tblBadge').textContent=uniqueReal.size+' realizados'+(futuros.size?' \u00B7 '+futuros.size+' futuros':'');
   rTabela(cr);rPec(sel,cr,hr);rOcc(hr);rChk(cr);
 }
 
 function rTabela(cr){
   const tbody=g('tblBody');
   if(!cr.length){tbody.innerHTML='<tr><td colspan="5" class="empty">Sem dados</td></tr>';return;}
-  /* ✅ deduplicar por tarefaKey para não mostrar 2 linhas da mesma tarefa */
-  const vistos=new Set();
-  const crUniq=cr.filter(r=>{
-    const k=r.tarefaKey||r.di+'||'+r.nome;
-    if(vistos.has(k))return false;vistos.add(k);return true;
-  });
-  tbody.innerHTML=crUniq.map((r,i)=>{
+  tbody.innerHTML=cr.map((r,i)=>{
     const realizado=r.realizado||r.di<=TODAY;
-    let hrVal=null;
-    if(r.hReal!=null)hrVal=r.hReal;
-    else if(realizado){const mhh=hh.filter(h=>h.data===r.di&&r.projs.some(p=>h.proj===p));hrVal=mhh.reduce((s,h)=>{let d=pM(h.fim)-pM(h.ini);if(d<0)d+=1440;return s+d;},0)/60;}
-    const cor=projCor(r.projs[0]||'');
+    let hrVal=r.hReal;
+    if(hrVal==null&&realizado){
+      const mhh=hh.filter(h=>h.data===r.di&&h.proj===r.proj);
+      hrVal=mhh.reduce((s,h)=>{let d=pM(h.fim)-pM(h.ini);if(d<0)d+=1440;return s+d;},0)/60;
+    }
+    const cor=projCor(r.proj);
     return'<tr style="background:'+(i%2===0?'#fff':'#fafafe')+'">'
       +'<td>'+fmtData(r.di)+'</td>'
-      +'<td><span class="proj-pill" style="background:'+cor+'18;color:'+cor+'">'+r.projs.join(', ')+'</span></td>'
+      +'<td><span class="proj-pill" style="background:'+cor+'18;color:'+cor+'">'+r.proj+'</span></td>'
       +'<td>'+(r.hPlan!=null?fH2(r.hPlan):'--')+'</td>'
-      +'<td>'+(hrVal!=null?fH2(hrVal):'--')+'</td>'
+      +'<td>'+(hrVal!=null&&hrVal>0?fH2(hrVal):'--')+'</td>'
       +'<td><span class="'+(realizado?'s-ok':'s-fut')+'">'+(realizado?'\u2705 Realizado':'\uD83D\uDD52 Futuro')+'</span></td>'
       +'</tr>';
   }).join('');
 }
 
-function rPec(proj,cr,hr){const pm=calcPecas(cr,hr);const tot=Object.values(pm).reduce((s,v)=>s+v.q,0);g('pVal').textContent=tot?tot.toLocaleString('pt-BR'):'--';g('pProj').textContent=proj||'total geral';}
+function rPec(proj,cr,hr){const pm=calcPecas(cr,hr);const tot=Object.values(pm).reduce((s,v)=>s+v,0);g('pVal').textContent=tot?tot.toLocaleString('pt-BR'):'--';g('pProj').textContent=proj||'total geral';}
 
 function rOcc(hr){
   const w=g('occList');if(!hr.length){w.innerHTML='<div class="empty">Sem dados hora\u00D7hora</div>';return;}
@@ -547,10 +673,7 @@ let _tt;
 function toast(msg){const t=g('toast');t.textContent=msg;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),3200);}
 
 async function carregarConfig(){
-  try{
-    const res=await fetch(GH_RAW+'/config.json?t='+Date.now());
-    if(res.ok)CFG=await res.json();
-  }catch{}
+  try{const res=await fetch(GH_RAW+'/config.json?t='+Date.now());if(res.ok)CFG=await res.json();}catch{}
   PROJS_VALIDOS=new Set(CFG.projetos.map(p=>p.id));
   SKIP=new Set(CFG.filtros.ocorrenciasIgnorar.map(s=>nk(s)));
 }
@@ -573,7 +696,11 @@ async function carregarConfig(){
   if(saved.length){
     arqs=saved.map(s=>({nome:s.nome,tipo:s.tipo||'h',dados:s.dados,exportDate:s.exportDate||''}));
     const cronArqs=arqs.filter(a=>a.tipo==='c');
-    if(cronArqs.length){cronArqs.sort((a,b)=>(b.exportDate||'').localeCompare(a.exportDate||''));cron=cronArqs[0].dados;}
+    if(cronArqs.length){
+      /* ✅ sempre o mais recente */
+      cronArqs.sort((a,b)=>(b.exportDate||'').localeCompare(a.exportDate||''));
+      cron=cronArqs[0].dados;
+    }
     hh=arqs.filter(a=>a.tipo==='h').flatMap(a=>a.dados);
     if(cron.length||hh.length){calcKPI();rBt();rScr();toast('Cache: '+cron.length+' SMDs \u00B7 '+hh.length+' HH');}
   }
